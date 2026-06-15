@@ -1,0 +1,34 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+
+# ROS 2 / colcon workspace artifacts
+ws_vins/build/
+ws_vins/install/
+ws_vins/log/
+
+# Datasets and experiment outputs
+datasets/
+results/
+*.bag
+*.db3
+
+# evo / ROS
+.evo/
+.ros/
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+
+# Build artifacts
+*.o
+*.a
+*.so

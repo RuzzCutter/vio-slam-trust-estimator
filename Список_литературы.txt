@@ -1,0 +1,25 @@
+Список литературы
+1. Campos C., Elvira R., Rodríguez J.J.G., Montiel J.M.M., Tardós J.D. ORB-SLAM3: An Accurate Open-Source Library for Visual, Visual-Inertial, and Multi-Map SLAM // IEEE Transactions on Robotics. 2021. Vol. 37, ? 6. P. 1874-1890.
+2. Qin T., Li P., Shen S. VINS-Mono: A Robust and Versatile Monocular Visual-Inertial State Estimator // IEEE Transactions on Robotics. 2018. Vol. 34, ? 4. P. 1004-1020.
+3. Leutenegger S., Lynen S., Bosse M., Siegwart R., Furgale P. Keyframe-Based Visual-Inertial Odometry Using Nonlinear Optimization // International Journal of Robotics Research. 2015. Vol. 34, ? 3. P. 314-334.
+4. Forster C., Carlone L., Dellaert F., Scaramuzza D. On-Manifold Preintegration for Real-Time Visual-Inertial Odometry // IEEE Transactions on Robotics. 2017. Vol. 33, ? 1. P. 1-21.
+5. Mur-Artal R., Tardós J.D. ORB-SLAM2: An Open-Source SLAM System for Monocular, Stereo and RGB-D Cameras // IEEE Transactions on Robotics. 2017. Vol. 33, ? 5. P. 1255-1262.
+6. Huang G., Mourikis A.I., Roumeliotis S.I. Observability-Based Rules for Designing Consistent EKF SLAM Estimators // IEEE Transactions on Robotics. 2010. Vol. 26, ? 2. P. 201-212.
+7. Li M., Mourikis A.I. High-Precision, Consistent EKF-Based Visual-Inertial Odometry // International Journal of Robotics Research. 2013. Vol. 32, ? 6. P. 690-711.
+8. Geneva P., Eckenhoff K., Yang Y., Huang G. OpenVINS: A Research Platform for Visual-Inertial Estimation // Proc. IEEE International Conference on Robotics and Automation. 2020. P. 4666-4672.
+9. Sun K., Messikommer N., Scaramuzza D. Robust Visual Odometry by Outlier Rejection and Probabilistic Modeling // Proc. Robotics: Science and Systems. 2017.
+10. DeTone D., Malisiewicz T., Rabinovich A. SuperPoint: Self-Supervised Interest Point Detection and Description // Proc. CVPR Workshops. 2018.
+11. Sarlin P.E., DeTone D., Malisiewicz T., Rabinovich A. SuperGlue: Learning Feature Matching with Graph Neural Networks // Proc. IEEE Conference on Computer Vision and Pattern Recognition. 2020. P. 4938-4947.
+12. Brachmann E., Rother C. Learning Less is More - 6D Camera Localization via 3D Surface Regression // Proc. IEEE Conference on Computer Vision and Pattern Recognition. 2018. P. 4654-4662.
+13. Teed Z., Deng J. DROID-SLAM: Deep Visual SLAM for Monocular, Stereo and RGB-D Cameras // Advances in Neural Information Processing Systems. 2021.
+14. Eigen D., Puhrsch C., Fergus R. Depth Map Prediction from a Single Image Using a Multi-Scale Deep Network // Advances in Neural Information Processing Systems. 2014. P. 2366-2374.
+15. Ranftl R., Bochkovskiy A., Koltun V. Vision Transformers for Dense Prediction // Proc. IEEE International Conference on Computer Vision. 2021. P. 12179-12188.
+16. Bhat S.F., Alhashim I., Wonka P. AdaBins: Depth Estimation Using Adaptive Bins // Proc. IEEE Conference on Computer Vision and Pattern Recognition. 2021. P. 4009-4018.
+17. Song J., Jo H., Jin Y., Lee S.J. Uncertainty-Aware Depth Network for Visual-Inertial Odometry of Mobile Robots // Sensors. 2024. Vol. 24, ? 20. Art. 6665.
+18. Yang J., Yin Y., Jing Q. Semantic Stereo Visual Estimator Based on VINS-Fusion for Restricted Aquatic Environments // Measurement. 2026. Vol. 258. Art. 119054.
+19. Kim J., Kim H., Myung H. Robust Visual Odometry in Adverse Weather Conditions // IEEE Robotics and Automation Letters. 2021. Vol. 6, ? 2. P. 2658-2665.
+20. Zaffar M., Ehsan S., Milford M., McDonald-Maier K. VPR-Bench: An Open-Source Visual Place Recognition Benchmarking Framework // IEEE Transactions on Intelligent Transportation Systems. 2021. Vol. 22, ? 9. P. 5319-5330.
+21. Geiger A., Lenz P., Urtasun R. Are We Ready for Autonomous Driving? The KITTI Vision Benchmark Suite // Proc. IEEE Conference on Computer Vision and Pattern Recognition. 2012. P. 3354-3361.
+22. Burri M., Nikolic J., Gohl P. et al. The EuRoC Micro Aerial Vehicle Datasets // International Journal of Robotics Research. 2016. Vol. 35, ? 10. P. 1157-1163.
+23. Schubert D., Goll T., Demmel N. et al. The TUM-VI Benchmark for Evaluating Visual-Inertial Odometry // International Journal of Robotics Research. 2021. Vol. 40, ? 8-9. P. 1016-1038.
+

@@ -1,0 +1,4 @@
+[submodule "ws_vins/src/open_vins"]
+	path = ws_vins/src/open_vins
+	url = https://github.com/RuzzCutter/open_vins.git
+	branch = jazzy/ros2-headers
