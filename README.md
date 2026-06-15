@@ -26,5 +26,18 @@ source install/setup.bash
 ## Smoke-test
 
 ```bash
-bash scripts/test_smoke.sh
+bash scripts/test_smoke.sh      # быстрая проверка OpenVINS
+bash scripts/test_tools.sh      # полная проверка окружения
 ```
+
+Перед запуском скриптов с `source /opt/ros/...` не включайте `set -u` в той же shell-сессии — ROS setup использует неинициализированные переменные. Скрипты используют `scripts/lib.sh` для безопасного sourcing.
+
+## EuRoC baseline (с датасетом)
+
+```bash
+bash scripts/download_datasets.sh minimal   # ETH Research Collection (~12.6 GB zip)
+bash scripts/run_euroc_baseline.sh MH_01_easy --duration 60
+```
+
+Старый сервер `robotics.ethz.ch` и Google Drive-зеркала OpenVINS часто недоступны.
+По умолчанию используется официальный [ETH Research Collection](https://doi.org/10.3929/ethz-b-000690084).
