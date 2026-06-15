@@ -9,9 +9,9 @@
 |------|--------|
 | 1. Окружение и сборка OpenVINS | **готово** |
 | 2. Тестовые запуски без датасетов | **готово** |
-| 3. trust_estimator + адаптивная ковариация | **следующий** |
-| 4. Карта достоверности (раздел 4.3–4.4) | после этапа 3 |
-| 5. Прогоны на датасетах + деградация | **в работе** (baseline smoke OK) |
+| 3. trust_estimator + адаптивная ковариация | **готово** (smoke OK) |
+| 4. Карта достоверности (раздел 4.3–4.4) | следующий |
+| 5. Прогоны на датасетах + деградация | **в работе** |
 | 6. Таблицы и текст статьи | — |
 
 ---
@@ -168,6 +168,20 @@ R_t = R₀ / (c(t) + 0.05),  cap: R_t ≤ 100·R₀
 ```
 
 При c(t) < 0.15 — пропуск визуального обновления.
+
+**Реализация:** `ov_msckf/src/trust/TrustEstimator.{h,cpp}`  
+**Интеграция:** `UpdaterMSCKF.cpp` — масштабирование `sigma_pix_sq`, лог CSV  
+**Конфиг baseline:** `config/euroc_mav` (`trust_enable: false`)  
+**Конфиг adaptive:** `config/euroc_mav_trust` (`trust_enable: true`)
+
+```bash
+# baseline (без trust)
+bash scripts/run_euroc_baseline.sh MH_01_easy --duration 60
+
+# adaptive (trust_estimator)
+bash scripts/run_euroc_adaptive.sh MH_01_easy --duration 60
+# trust log: datasets/results/<SEQ>_adaptive_*/trust_log.csv
+```
 
 ---
 

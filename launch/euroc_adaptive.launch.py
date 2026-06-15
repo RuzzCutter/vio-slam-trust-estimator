@@ -13,7 +13,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument("rviz_enable", default_value="false"),
-        DeclareLaunchArgument("config", default_value="euroc_mav"),
+        DeclareLaunchArgument("config", default_value="euroc_mav_trust"),
         DeclareLaunchArgument("config_path", default_value=""),
         DeclareLaunchArgument("verbosity", default_value="INFO"),
         SetParameter(name="use_sim_time", value=True),
