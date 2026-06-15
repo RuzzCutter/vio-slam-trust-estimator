@@ -11,7 +11,7 @@
 | 2. Тестовые запуски без датасетов | **готово** |
 | 3. trust_estimator + адаптивная ковариация | **готово** (smoke OK) |
 | 4. Карта достоверности (раздел 4.3–4.4) | следующий |
-| 5. Прогоны на датасетах + деградация | **в работе** |
+| 5. Прогоны на датасетах + деградация | **в работе** (экспорт traj + demo CLI) |
 | 6. Таблицы и текст статьи | — |
 
 ---
@@ -119,12 +119,29 @@ bash scripts/run_euroc_baseline.sh MH_05_difficult
 
 #### Сравнение baseline vs adaptive (план)
 
-После реализации `trust_estimator` — тот же протокол, отдельный скрипт
-`scripts/run_euroc_adaptive.sh` (или флаг `--adaptive`), те же последовательности и offset.
-Результаты в `datasets/results/<SEQ>_adaptive_<timestamp>/`.
+Единый скрипт: `scripts/run_euroc.sh`  
+Интерактивный demo: `python3 scripts/run_demo.py`
 
-Для ATE/RPE нужно добавить запись траектории (сейчас только лог; экспорт pose — следующий шаг
-перед таблицами, см. журнал 4.3).
+```bash
+# demo-мастер (меню)
+python3 scripts/run_demo.py
+
+# быстрый demo 60 с
+python3 scripts/run_demo.py --quick
+
+# baseline / adaptive
+bash scripts/run_euroc.sh baseline MH_01_easy --duration 60
+bash scripts/run_euroc.sh adaptive MH_04_difficult --duration 120 --eval
+
+# сравнение двух режимов подряд
+python3 scripts/run_demo.py --compare --seq MH_04_difficult --duration 90 --eval
+```
+
+Результаты: `datasets/results/<SEQ>_<mode>_<timestamp>/`
+- `trajectory_tum.txt` — оценённая траектория (TUM: t x y z qx qy qz qw)
+- `trust_log.csv` — только adaptive
+- `openvins.log`, `bag_play.log`
+- `metrics/` — ATE/RPE при `--eval` (MH_04, MH_05)
 
 ---
 

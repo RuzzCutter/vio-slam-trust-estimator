@@ -32,12 +32,18 @@ bash scripts/test_tools.sh      # полная проверка окружени
 
 Перед запуском скриптов с `source /opt/ros/...` не включайте `set -u` в той же shell-сессии — ROS setup использует неинициализированные переменные. Скрипты используют `scripts/lib.sh` для безопасного sourcing.
 
-## EuRoC baseline (с датасетом)
+## EuRoC baseline / adaptive
 
 ```bash
-bash scripts/download_datasets.sh minimal   # ETH Research Collection (~12.6 GB zip)
-bash scripts/run_euroc_baseline.sh MH_01_easy --duration 60
+python3 scripts/run_demo.py              # интерактивный demo
+python3 scripts/run_demo.py --quick      # adaptive, MH_01, 60 с
+
+bash scripts/run_euroc.sh baseline MH_01_easy --duration 60
+bash scripts/run_euroc.sh adaptive MH_04_difficult --eval
 ```
+
+Траектория: `datasets/results/.../trajectory_tum.txt` (TUM).  
+Старые обёртки `run_euroc_baseline.sh` / `run_euroc_adaptive.sh` по-прежнему работают.
 
 Старый сервер `robotics.ethz.ch` и Google Drive-зеркала OpenVINS часто недоступны.
 По умолчанию используется официальный [ETH Research Collection](https://doi.org/10.3929/ethz-b-000690084).

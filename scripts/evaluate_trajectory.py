@@ -29,7 +29,7 @@ def euroc_gt_to_tum(csv_path: Path, out_path: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--est", type=Path, required=True, help="Estimated trajectory (TUM format)")
-    parser.add_argument("--gt", type=Path, required=True, help="Ground truth (TUM or EuRoC CSV)")
+    parser.add_argument("--gt", type=Path, required=True, help="Ground truth (TUM, OpenVINS txt, or EuRoC CSV)")
     parser.add_argument("--out-dir", type=Path, default=Path("results"))
     args = parser.parse_args()
 
