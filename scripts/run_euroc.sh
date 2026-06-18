@@ -98,7 +98,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --ablate)
-      local feat="${2:-}"
+      feat="${2:-}"
       feat="${feat,,}"
       case "${feat}" in
         f1|f2|f3|f4) ABLATE="${ABLATE} ${feat}" ;;
