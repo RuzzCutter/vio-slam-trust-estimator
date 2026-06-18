@@ -1,0 +1,85 @@
+# Каталог датасетов для run_demo.py / download_datasets.sh
+# Пользовательские записи — в config/datasets_custom.yaml (см. .example)
+
+families:
+  euroc_mav:
+    label: "EuRoC Machine Hall"
+    openvins_config: euroc_mav
+    openvins_config_trust: euroc_mav_trust
+    bag_dir: euroc
+    # Источник по умолчанию для download_datasets.sh
+    default_source: ethz-rc
+
+sequences:
+  MH_01_easy:
+    family: euroc_mav
+    label: "Machine Hall — лёгкий (smoke-test, ~80 м)"
+    tier: smoke
+    start_offset: 40
+    expected_path_m: 80
+    gt_file: null
+    gdrive_id: "1UP4nkuSEOQECZTswwh9BPgfMl-dnDstA"
+    archive_inner: "machine_hall/MH_01_easy/MH_01_easy.bag"
+
+  MH_02_easy:
+    family: euroc_mav
+    label: "Machine Hall — лёгкий #2"
+    tier: optional
+    start_offset: 35
+    expected_path_m: 73
+    gt_file: null   # в ov_data OpenVINS нет MH_02_difficult.txt (см. README)
+    gdrive_id: "1wWZgZCqYz6zzzTXS0iqvQCP-cWfFuGLK"
+    archive_inner: "machine_hall/MH_02_easy/MH_02_easy.bag"
+
+  MH_03_medium:
+    family: euroc_mav
+    label: "Machine Hall — средний"
+    tier: optional
+    start_offset: 5
+    expected_path_m: 131
+    gt_file: null
+    gdrive_id: "1er07gZ8rso8R3Su00hJMm_GZ4z1n9Rpq"
+    archive_inner: "machine_hall/MH_03_medium/MH_03_medium.bag"
+
+  MH_04_difficult:
+    family: euroc_mav
+    label: "Machine Hall — сложный (benchmark baseline/adaptive)"
+    tier: benchmark
+    start_offset: 15
+    expected_path_m: 92
+    gt_file: MH_04_difficult.txt
+    gdrive_id: "1eC8joRXo1rh0wzOpq3e-B4dQ8-w6wZYz"
+    archive_inner: "machine_hall/MH_04_difficult/MH_04_difficult.bag"
+
+  MH_05_difficult:
+    family: euroc_mav
+    label: "Machine Hall — сложный #2"
+    tier: benchmark
+    start_offset: 5
+    expected_path_m: 95
+    gt_file: MH_05_difficult.txt
+    gdrive_id: "1zoN94K1Afrp7HXSduRLkJBiEjPKdk1UA"
+    archive_inner: "machine_hall/MH_05_difficult/MH_05_difficult.bag"
+
+# Группы для пакетной загрузки
+bundles:
+  minimal:
+    - MH_01_easy
+    - MH_04_difficult
+    - MH_05_difficult
+  full:
+    - MH_01_easy
+    - MH_02_easy
+    - MH_03_medium
+    - MH_04_difficult
+    - MH_05_difficult
+
+# Источники загрузки EuRoC
+sources:
+  ethz-rc:
+    label: "ETH Research Collection (machine_hall.zip, ~12.6 GB)"
+    machine_hall_url: "https://www.research-collection.ethz.ch/server/api/core/bitstreams/7b2419c1-62b5-4714-b7f8-485e5fe3e5fe/content"
+  gdrive:
+    label: "Google Drive (ROS2 zip на последовательность)"
+  ethz-legacy:
+    label: "robotics.ethz.ch (часто недоступен)"

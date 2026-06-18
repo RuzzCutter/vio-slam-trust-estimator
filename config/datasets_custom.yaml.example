@@ -1,0 +1,29 @@
+# Скопируйте в datasets_custom.yaml и добавьте свои bag.
+# Формат совместим с config/datasets.yaml (секция sequences).
+
+sequences:
+  # Пример: локальный ROS2 bag (уже конвертированный)
+  # my_flight_01:
+  #   family: custom
+  #   label: "Мой полёт в лаборатории"
+  #   openvins_config: euroc_mav
+  #   start_offset: 0
+  #   expected_path_m: null
+  #   gt_file: null
+  #   bag:
+  #     type: local
+  #     path: datasets/custom/my_flight_01_ros2
+
+  # Пример: скачать по URL (ROS1 .bag → конвертация в ROS2 при загрузке)
+  # my_flight_02:
+  #   family: custom
+  #   label: "Запись с дрона (URL)"
+  #   openvins_config: euroc_mav
+  #   start_offset: 5
+  #   bag:
+  #     type: url
+  #     url: "https://example.com/path/to/recording.bag"
+  #   topics:
+  #     imu: /imu0
+  #     cam0: /cam0/image_raw
+  #     cam1: /cam1/image_raw
