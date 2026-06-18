@@ -1,0 +1,81 @@
+# Ablation study: отключение одного признака f1…f4 за прогон.
+# kind: ablation → только adaptive (без baseline).
+#
+# Запуск:
+#   python3 scripts/run_batch.py --plan config/batch_ablation.yaml --dry-run
+#   python3 scripts/run_batch.py --plan config/batch_ablation.yaml
+
+id: ablation_d1
+kind: ablation
+description: "MH_04/MH_05 + D1/D3 — full vs w/o f1…f4"
+
+eval: true
+
+advanced:
+  retries: 3
+  trust_tau: 5.0
+
+runs:
+  # --- MH_04 gaussian:5 ---
+  - seq: MH_04_difficult
+    degrade: gaussian:5
+  - seq: MH_04_difficult
+    degrade: gaussian:5
+    ablate: f1
+  - seq: MH_04_difficult
+    degrade: gaussian:5
+    ablate: f2
+  - seq: MH_04_difficult
+    degrade: gaussian:5
+    ablate: f3
+  - seq: MH_04_difficult
+    degrade: gaussian:5
+    ablate: f4
+
+  # --- MH_04 brightness:40 ---
+  - seq: MH_04_difficult
+    degrade: brightness:40
+  - seq: MH_04_difficult
+    degrade: brightness:40
+    ablate: f1
+  - seq: MH_04_difficult
+    degrade: brightness:40
+    ablate: f2
+  - seq: MH_04_difficult
+    degrade: brightness:40
+    ablate: f3
+  - seq: MH_04_difficult
+    degrade: brightness:40
+    ablate: f4
+
+  # --- MH_05 gaussian:5 ---
+  - seq: MH_05_difficult
+    degrade: gaussian:5
+  - seq: MH_05_difficult
+    degrade: gaussian:5
+    ablate: f1
+  - seq: MH_05_difficult
+    degrade: gaussian:5
+    ablate: f2
+  - seq: MH_05_difficult
+    degrade: gaussian:5
+    ablate: f3
+  - seq: MH_05_difficult
+    degrade: gaussian:5
+    ablate: f4
+
+  # --- MH_05 brightness:40 ---
+  - seq: MH_05_difficult
+    degrade: brightness:40
+  - seq: MH_05_difficult
+    degrade: brightness:40
+    ablate: f1
+  - seq: MH_05_difficult
+    degrade: brightness:40
+    ablate: f2
+  - seq: MH_05_difficult
+    degrade: brightness:40
+    ablate: f3
+  - seq: MH_05_difficult
+    degrade: brightness:40
+    ablate: f4

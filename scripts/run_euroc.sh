@@ -19,6 +19,7 @@ DURATION=""
 DEGRADE=""
 START_OFFSET=""
 TRUST_TAU=""
+ABLATE=""
 RVIZ=false
 EVAL=false
 VERBOSE=true
@@ -39,6 +40,7 @@ Options:
   --degrade SPEC   Degrade images: TYPE:LEVEL (e.g. gaussian:5, brightness:40)
   --start-offset S Start bag playback at S seconds (default: from config/datasets.yaml)
   --trust-tau T    Override trust_tau for adaptive (default: 5.0 from config)
+  --ablate FX      Ablation: disable trust feature f1|f2|f3|f4 (repeatable)
   --viz            Open RViz + auto-play bag (single terminal)
   --eval           Compute ATE/RPE after run (needs GT + evo)
   --quiet          Less console output
@@ -52,6 +54,7 @@ Degradation presets (experiment D1/D3):
 Examples:
   bash scripts/run_euroc.sh baseline MH_01_easy --duration 60
   bash scripts/run_euroc.sh adaptive MH_04_difficult --duration 120 --eval
+  bash scripts/run_euroc.sh adaptive MH_04_difficult --ablate f1 --degrade gaussian:5 --eval
   bash scripts/run_euroc.sh adaptive MH_01_easy --viz
 EOF
 }
@@ -94,6 +97,18 @@ while [[ $# -gt 0 ]]; do
       TRUST_TAU="${2:-}"
       shift 2
       ;;
+    --ablate)
+      local feat="${2:-}"
+      feat="${feat,,}"
+      case "${feat}" in
+        f1|f2|f3|f4) ABLATE="${ABLATE} ${feat}" ;;
+        *)
+          echo "ERROR: --ablate expects f1|f2|f3|f4, got: ${2:-}" >&2
+          exit 1
+          ;;
+      esac
+      shift 2
+      ;;
     --viz) RVIZ=true; shift ;;
     --eval) EVAL=true; shift ;;
     --quiet) VERBOSE=false; shift ;;
@@ -122,8 +137,13 @@ euroc_kill_stale_ros
 DATA_ROOT="${DATA_ROOT:-$(aspiranture_root)/datasets}"
 BAG="$(euroc_resolve_bag "${SEQ}" "${DEGRADE}")" || exit 1
 TAG="${MODE}"
+if [[ -n "${ABLATE}" ]]; then
+  for _af in ${ABLATE}; do
+    TAG="${TAG}_no${_af}"
+  done
+fi
 if [[ -n "${DEGRADE}" ]]; then
-  TAG="${MODE}_$(echo "${DEGRADE}" | tr ':' '_')"
+  TAG="${TAG}_$(echo "${DEGRADE}" | tr ':' '_')"
 fi
 OUT_DIR_BASE="${DATA_ROOT}/results/${SEQ}_${TAG}_$(date +%Y%m%d_%H%M%S)"
 OUT_DIR="${OUT_DIR_BASE}"
@@ -138,9 +158,12 @@ if [[ "${MODE}" == "baseline" ]]; then
   MODE_LABEL="Baseline (классический OpenVINS, фиксированный шум измерений)"
 else
   LAUNCH_FILE="$(aspiranture_root)/launch/euroc_adaptive.launch.py"
-  RUN_CONFIG="$(euroc_prepare_adaptive_config "${OUT_DIR}" "${TRUST_LOG}" "${TRUST_TAU}")"
+  RUN_CONFIG="$(euroc_prepare_adaptive_config "${OUT_DIR}" "${TRUST_LOG}" "${TRUST_TAU}" "${ABLATE}")"
   CONFIG_PATH_ARG="config_path:=${RUN_CONFIG}"
   MODE_LABEL="Adaptive (OpenVINS + trust_estimator, адаптивная ковариация)"
+  if [[ -n "${ABLATE}" ]]; then
+    MODE_LABEL="Adaptive ablation w/o${ABLATE} (trust_estimator)"
+  fi
 fi
 
 if [[ ! -d "${BAG}" ]]; then
@@ -164,6 +187,9 @@ if ${VERBOSE}; then
   demo_kv "Последов." "${SEQ}"
   demo_kv "Bag" "${BAG}"
   demo_kv "Деградация" "${DEGRADE_LABEL}"
+  if [[ -n "${ABLATE}" ]]; then
+    demo_kv "Ablation" "отключено:${ABLATE}"
+  fi
   demo_kv "Длительность" "$([[ -n "${DURATION}" ]] && echo "${DURATION} с" || echo "полный bag")"
   demo_kv "Визуализация" "$(${RVIZ} && echo "RViz + bag" || echo "headless")"
   demo_kv "Start-offset" "$([[ "${START_OFFSET}" != "0" ]] && echo "${START_OFFSET} с" || echo "0")"
@@ -285,6 +311,7 @@ finish() {
     --seq "${SEQ}" \
     --mode "${MODE}" \
     --degrade "${DEGRADE}" \
+    --ablate "${ABLATE# }" \
     --start-offset "${START_OFFSET}" \
     "${trust_tau_args[@]}" \
     --retry "${retry_n}" \
@@ -309,7 +336,7 @@ while [[ "${attempt}" -le "${MAX_RETRIES}" ]]; do
     TRAJ_FILE="${OUT_DIR}/trajectory_tum.txt"
     TRUST_LOG="${OUT_DIR}/trust_log.csv"
     if [[ "${MODE}" == "adaptive" ]]; then
-      RUN_CONFIG="$(euroc_prepare_adaptive_config "${OUT_DIR}" "${TRUST_LOG}" "${TRUST_TAU}")"
+      RUN_CONFIG="$(euroc_prepare_adaptive_config "${OUT_DIR}" "${TRUST_LOG}" "${TRUST_TAU}" "${ABLATE}")"
       CONFIG_PATH_ARG="config_path:=${RUN_CONFIG}"
     fi
     demo_warn "Повтор ${attempt}/${MAX_RETRIES} — предыдущий прогон расходился"

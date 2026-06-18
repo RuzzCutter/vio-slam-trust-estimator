@@ -338,7 +338,19 @@ datasets/results/batches/<batch_id>/
 └── batch_summary.txt
 ```
 
-**Выход `build_tables.py`:** `paper_tables/table_all.md`, `table_clean.md`, `table_degraded.md`, `table_all.tex`, `table_all.csv`.
+**Выход `build_tables.py`:** `paper_tables/table_all.md`, …, `table_ablation.md` (режим `--kind ablation`).
+
+### Ablation f₁–f₄
+
+Отключение одного признака за прогон (`trust_use_f*` → false, среднее c по оставшимся 3):
+
+```bash
+bash scripts/run_euroc.sh adaptive MH_04_difficult --ablate f1 --degrade gaussian:5 --eval
+python3 scripts/run_batch.py --plan config/batch_ablation.yaml   # 20 прогонов
+python3 scripts/build_tables.py --batch datasets/results/batches/ablation_d1_... --kind ablation
+```
+
+После изменений в `TrustEstimator` пересобрать: `colcon build --packages-select ov_msckf --symlink-install`.
 
 Зависимость batch-планов: `pip install pyyaml` (в venv).
 
@@ -366,6 +378,10 @@ bash scripts/run_euroc.sh adaptive MH_05_difficult --degrade brightness:40 --eva
 # Batch для таблиц статьи
 python3 scripts/run_batch.py --plan config/batch_paper.yaml
 python3 scripts/build_tables.py --batch datasets/results/batches/paper_main_... --out paper_tables/
+
+# Ablation f₁–f₄ (на деградации)
+python3 scripts/run_batch.py --plan config/batch_ablation.yaml
+python3 scripts/build_tables.py --batch datasets/results/batches/ablation_d1_... --kind ablation --out paper_tables/
 ```
 
 ---

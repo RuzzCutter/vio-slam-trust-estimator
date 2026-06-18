@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Unattended batch compare runs for paper experiments.
+"""Unattended batch runs for paper experiments (compare or ablation).
 
-Reads a YAML plan, runs compare (baseline + adaptive) for each cell, writes
-manifest.jsonl under datasets/results/batches/<batch_id>/.
+Reads a YAML plan, writes manifest.jsonl under datasets/results/batches/<batch_id>/.
 
-Example:
+Examples:
   python3 scripts/run_batch.py --plan config/batch_paper.yaml
-  python3 scripts/run_batch.py --plan config/batch_paper.yaml --dry-run
-  python3 scripts/run_batch.py --resume datasets/results/batches/paper_main_20260618_120000
+  python3 scripts/run_batch.py --plan config/batch_ablation.yaml
+  python3 scripts/run_batch.py --resume datasets/results/batches/ablation_d1_...
 """
 
 from __future__ import annotations
@@ -32,9 +31,15 @@ except ImportError:
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
-from run_results import compare_from_dirs, degrade_spec_to_label  # noqa: E402
+from run_results import (  # noqa: E402
+    ablate_spec_to_variant,
+    compare_from_dirs,
+    degrade_spec_to_label,
+    load_run_record,
+)
 
 RUN_DEMO = ROOT / "scripts" / "run_demo.py"
+RUN_EUROC = ROOT / "scripts" / "run_euroc.sh"
 DEFAULT_RESULTS = ROOT / "datasets" / "results"
 
 
@@ -45,6 +50,13 @@ def load_plan(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict) or "runs" not in data:
         raise SystemExit(f"Invalid plan (need 'runs' list): {path}")
     return data
+
+
+def plan_kind(plan: dict[str, Any]) -> str:
+    kind = (plan.get("kind") or plan.get("mode") or "compare").lower()
+    if kind in ("ablation", "adaptive"):
+        return "ablation"
+    return "compare"
 
 
 def _parse_result_dirs(stdout: str) -> list[str]:
@@ -81,8 +93,7 @@ def run_compare_cell(
     if advanced.get("trust_tau") is not None:
         cmd.extend(["--trust-tau", str(advanced["trust_tau"])])
 
-    log_lines: list[str] = []
-    log_lines.append(f"$ {' '.join(cmd)}")
+    log_lines = [f"$ {' '.join(cmd)}"]
     proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(ROOT))
     combined = (proc.stdout or "") + (proc.stderr or "")
     log_lines.append(combined)
@@ -90,6 +101,44 @@ def run_compare_cell(
     baseline_dir = dirs[0] if len(dirs) >= 1 else None
     adaptive_dir = dirs[1] if len(dirs) >= 2 else None
     return proc.returncode, baseline_dir, adaptive_dir, "\n".join(log_lines)
+
+
+def run_adaptive_cell(
+    *,
+    seq: str,
+    degrade: str,
+    ablate: str,
+    duration: int | None,
+    eval_ate: bool,
+    advanced: dict[str, Any],
+    quiet: bool,
+) -> tuple[int, str | None, str]:
+    cmd = ["bash", str(RUN_EUROC), "adaptive", seq]
+    if duration is not None:
+        cmd.extend(["--duration", str(duration)])
+    if degrade:
+        cmd.extend(["--degrade", degrade])
+    for feat in ablate.replace(",", " ").split():
+        feat = feat.strip().lower()
+        if feat:
+            cmd.extend(["--ablate", feat])
+    if eval_ate:
+        cmd.append("--eval")
+    if quiet:
+        cmd.append("--quiet")
+    if advanced.get("start_offset") is not None:
+        cmd.extend(["--start-offset", str(advanced["start_offset"])])
+    if advanced.get("retries") is not None:
+        cmd.extend(["--retries", str(advanced["retries"])])
+    if advanced.get("trust_tau") is not None:
+        cmd.extend(["--trust-tau", str(advanced["trust_tau"])])
+
+    log_lines = [f"$ {' '.join(cmd)}"]
+    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(ROOT))
+    combined = (proc.stdout or "") + (proc.stderr or "")
+    log_lines.append(combined)
+    dirs = _parse_result_dirs(proc.stdout or "")
+    return proc.returncode, (dirs[-1] if dirs else None), "\n".join(log_lines)
 
 
 def _manifest_index(manifest_path: Path) -> set[int]:
@@ -110,8 +159,16 @@ def _append_manifest(path: Path, row: dict[str, Any]) -> None:
         fh.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
+def _run_label(degrade: str, ablate: str) -> str:
+    parts = [degrade_spec_to_label(degrade)]
+    variant = ablate_spec_to_variant(ablate)
+    if variant != "full":
+        parts.append(f"ablate {variant}")
+    return " | ".join(parts)
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Batch compare runner for paper tables")
+    parser = argparse.ArgumentParser(description="Batch runner for compare / ablation experiments")
     parser.add_argument("--plan", type=Path, default=ROOT / "config" / "batch_paper.yaml")
     parser.add_argument("--results-root", type=Path, default=DEFAULT_RESULTS)
     parser.add_argument("--id", dest="batch_id", default="", help="Batch id (default: from plan + timestamp)")
@@ -148,15 +205,17 @@ def main() -> int:
     duration = plan.get("duration")
     advanced = deepcopy(plan.get("advanced") or {})
     quiet = not args.no_quiet
+    kind = plan_kind(plan)
 
     if args.dry_run:
         print(f"Batch directory (preview): {batch_dir}")
-        print(f"Runs: {len(runs)} | eval={eval_ate} | completed={len(completed)}")
+        print(f"Kind: {kind} | Runs: {len(runs)} | eval={eval_ate} | completed={len(completed)}")
         print()
         for i, run in enumerate(runs, start=1):
             seq = run["seq"]
             degrade = run.get("degrade") or ""
-            label = degrade_spec_to_label(degrade)
+            ablate = run.get("ablate") or ""
+            label = _run_label(degrade, ablate)
             skip = "SKIP" if i in completed else "RUN"
             print(f"  [{skip}] {i:02d}. {seq} | {label}")
         return 0
@@ -164,7 +223,7 @@ def main() -> int:
     manifest_path = batch_dir / "manifest.jsonl"
 
     print(f"Batch directory: {batch_dir}")
-    print(f"Runs: {len(runs)} | eval={eval_ate} | completed={len(completed)}")
+    print(f"Kind: {kind} | Runs: {len(runs)} | eval={eval_ate} | completed={len(completed)}")
     print()
 
     summary_path = batch_dir / "batch_summary.txt"
@@ -180,47 +239,73 @@ def main() -> int:
 
         seq = run["seq"]
         degrade = run.get("degrade") or ""
-        label = degrade_spec_to_label(degrade)
+        ablate = run.get("ablate") or ""
+        label = _run_label(degrade, ablate)
         print(f"[{i:02d}/{len(runs)}] {seq} | {label} ...", flush=True)
 
-        rc, baseline_dir, adaptive_dir, log_text = run_compare_cell(
-            seq=seq,
-            degrade=degrade,
-            duration=run.get("duration", duration),
-            eval_ate=eval_ate,
-            advanced=advanced,
-            quiet=quiet,
-        )
+        if kind == "ablation":
+            rc, adaptive_dir, log_text = run_adaptive_cell(
+                seq=seq,
+                degrade=degrade,
+                ablate=ablate,
+                duration=run.get("duration", duration),
+                eval_ate=eval_ate,
+                advanced=advanced,
+                quiet=quiet,
+            )
+            baseline_dir = None
+        else:
+            rc, baseline_dir, adaptive_dir, log_text = run_compare_cell(
+                seq=seq,
+                degrade=degrade,
+                duration=run.get("duration", duration),
+                eval_ate=eval_ate,
+                advanced=advanced,
+                quiet=quiet,
+            )
 
-        log_file = batch_dir / f"run_{i:02d}_{seq}_{degrade.replace(':', '') or 'clean'}.log"
+        ablate_tag = ablate.replace(":", "") or "full"
+        log_file = batch_dir / f"run_{i:02d}_{seq}_{degrade.replace(':', '') or 'clean'}_{ablate_tag}.log"
         log_file.write_text(log_text, encoding="utf-8")
 
+        ok = rc == 0 and (adaptive_dir if kind == "ablation" else (baseline_dir and adaptive_dir))
         row: dict[str, Any] = {
             "index": i,
+            "kind": kind,
             "seq": seq,
             "degrade": degrade,
-            "degrade_label": label,
-            "status": "ok" if rc == 0 and baseline_dir and adaptive_dir else "failed",
+            "degrade_label": degrade_spec_to_label(degrade),
+            "ablate": ablate,
+            "ablate_variant": ablate_spec_to_variant(ablate),
+            "status": "ok" if ok else "failed",
             "returncode": rc,
             "baseline_dir": baseline_dir,
             "adaptive_dir": adaptive_dir,
+            "result_dir": adaptive_dir,
             "finished_at": datetime.now().isoformat(timespec="seconds"),
             "log_file": str(log_file.relative_to(ROOT)),
         }
 
-        if row["status"] == "ok" and baseline_dir and adaptive_dir:
-            cmp = compare_from_dirs(baseline_dir, adaptive_dir, batch_id=batch_dir.name, run_index=i)
-            row["verdict"] = cmp.verdict()
-            row["delta_ape_pct"] = cmp.delta_ape_pct()
-            b, a = cmp.baseline, cmp.adaptive
-            row["ape_baseline_m"] = b.ape_rmse_m if b else None
-            row["ape_adaptive_m"] = a.ape_rmse_m if a else None
-            print(
-                f"    → APE {row['ape_baseline_m']} / {row['ape_adaptive_m']} m | "
-                f"Δ={row['delta_ape_pct']:.1f}% | {row['verdict']}"
-                if row.get("delta_ape_pct") is not None
-                else f"    → done (see log)"
-            )
+        if row["status"] == "ok":
+            if kind == "ablation" and adaptive_dir:
+                rec = load_run_record(adaptive_dir)
+                row["ape_adaptive_m"] = rec.ape_rmse_m
+                row["rpe_adaptive_m"] = rec.rpe_rmse_m
+                row["c_mean"] = rec.c_mean
+                print(f"    → APE {row['ape_adaptive_m']} m | c̄={row.get('c_mean')}")
+            elif baseline_dir and adaptive_dir:
+                cmp = compare_from_dirs(baseline_dir, adaptive_dir, batch_id=batch_dir.name, run_index=i)
+                row["verdict"] = cmp.verdict()
+                row["delta_ape_pct"] = cmp.delta_ape_pct()
+                b, a = cmp.baseline, cmp.adaptive
+                row["ape_baseline_m"] = b.ape_rmse_m if b else None
+                row["ape_adaptive_m"] = a.ape_rmse_m if a else None
+                print(
+                    f"    → APE {row['ape_baseline_m']} / {row['ape_adaptive_m']} m | "
+                    f"Δ={row['delta_ape_pct']:.1f}% | {row['verdict']}"
+                    if row.get("delta_ape_pct") is not None
+                    else "    → done (see log)"
+                )
         else:
             failures += 1
             print(f"    ✗ failed (rc={rc}), log: {log_file.name}")
@@ -228,12 +313,18 @@ def main() -> int:
         _append_manifest(manifest_path, row)
 
     elapsed = time.time() - t0
+    build_cmd = (
+        f"python3 scripts/build_tables.py --batch {batch_dir} --kind ablation --out paper_tables/"
+        if kind == "ablation"
+        else f"python3 scripts/build_tables.py --batch {batch_dir} --out paper_tables/"
+    )
     summary = (
         f"Batch {batch_dir.name}\n"
+        f"Kind: {kind}\n"
         f"Finished at {datetime.now().isoformat(timespec='seconds')}\n"
         f"Runs: {len(runs)} | failures: {failures} | elapsed: {elapsed/60:.1f} min\n"
         f"Manifest: {manifest_path}\n"
-        f"Build tables: python3 scripts/build_tables.py --batch {batch_dir}\n"
+        f"Build tables: {build_cmd}\n"
     )
     summary_path.write_text(summary, encoding="utf-8")
     print()

@@ -41,6 +41,7 @@ class AdvancedParams:
     start_offset: int | None = None
     retries: int | None = None
     trust_tau: float | None = None
+    ablate: str = ""
 
 MODES = [
     ("adaptive", "Adaptive — с trust_estimator (адаптивная достоверность)"),
@@ -146,6 +147,11 @@ def _build_run_cmd(
             cmd.extend(["--retries", str(adv.retries)])
         if adv.trust_tau is not None and mode in ("adaptive", "compare"):
             cmd.extend(["--trust-tau", str(adv.trust_tau)])
+        if adv.ablate and mode in ("adaptive", "compare"):
+            for feat in adv.ablate.replace(",", " ").split():
+                feat = feat.strip().lower()
+                if feat:
+                    cmd.extend(["--ablate", feat])
     return cmd
 
 
@@ -497,6 +503,11 @@ def main() -> int:
     parser.add_argument("--start-offset", type=int, default=None, help="Override start-offset (s)")
     parser.add_argument("--retries", type=int, default=None, help="Max retries on divergence")
     parser.add_argument("--trust-tau", type=float, default=None, help="trust_tau for adaptive")
+    parser.add_argument(
+        "--ablate",
+        default="",
+        help="Ablation: disable trust feature f1|f2|f3|f4 (adaptive only, repeatable via comma)",
+    )
     parser.add_argument("--quick", action="store_true", help="Quick adaptive demo: MH_01_easy, 60 s")
     parser.add_argument(
         "--datasets",
@@ -521,8 +532,9 @@ def main() -> int:
         start_offset=args.start_offset,
         retries=args.retries,
         trust_tau=args.trust_tau,
+        ablate=args.ablate,
     )
-    if any(v is not None for v in (args.start_offset, args.retries, args.trust_tau)):
+    if any(v is not None for v in (args.start_offset, args.retries, args.trust_tau)) or args.ablate:
         global _SESSION_ADVANCED
         _SESSION_ADVANCED = cli_advanced
 

@@ -20,9 +20,12 @@ TRAJ_STATS = ROOT / "scripts" / "traj_stats.py"
 
 DIR_RE = re.compile(
     r"^(?P<seq>.+)_(?P<mode>baseline|adaptive)"
+    r"(?P<ablate_tags>(?:_nof[1-4])*)"
     r"(?:_(?P<degrade_tag>gaussian_\d+|brightness_\d+))?"
     r"_(?P<ts>\d{8}_\d{6})(?:_retry(?P<retry>\d+))?$"
 )
+
+ABLATION_VARIANTS = ("full", "f1", "f2", "f3", "f4")
 
 
 def degrade_tag_to_spec(tag: str | None) -> str:
@@ -33,6 +36,34 @@ def degrade_tag_to_spec(tag: str | None) -> str:
     if tag.startswith("brightness_"):
         return f"brightness:{tag.split('_', 1)[1]}"
     return tag.replace("_", ":")
+
+
+def ablate_tags_to_spec(tags: str | None) -> str:
+    if not tags:
+        return ""
+    nums = re.findall(r"nof([1-4])", tags)
+    return " ".join(f"f{n}" for n in nums)
+
+
+def ablate_spec_to_variant(spec: str) -> str:
+    spec = (spec or "").strip()
+    if not spec:
+        return "full"
+    parts = spec.replace(",", " ").split()
+    if len(parts) == 1 and parts[0] in ("f1", "f2", "f3", "f4"):
+        return parts[0]
+    return spec.replace(" ", "_")
+
+
+def ablate_variant_label(variant: str) -> str:
+    labels = {
+        "full": "full f₁…f₄",
+        "f1": "w/o f₁",
+        "f2": "w/o f₂",
+        "f3": "w/o f₃",
+        "f4": "w/o f₄",
+    }
+    return labels.get(variant, variant)
 
 
 def degrade_spec_to_label(spec: str) -> str:
@@ -130,6 +161,8 @@ class RunRecord:
     trust_rows: int = 0
     has_gt: bool = False
     init_ok: bool = False
+    ablate: str = ""
+    ablate_variant: str = "full"
 
     @property
     def tracking_failure(self) -> bool:
@@ -179,11 +212,14 @@ def parse_result_dirname(name: str) -> dict[str, Any] | None:
     if not m:
         return None
     degrade_tag = m.group("degrade_tag")
+    ablate = ablate_tags_to_spec(m.group("ablate_tags"))
     return {
         "seq": m.group("seq"),
         "mode": m.group("mode"),
         "degrade_tag": degrade_tag,
         "degrade": degrade_tag_to_spec(degrade_tag),
+        "ablate": ablate,
+        "ablate_variant": ablate_spec_to_variant(ablate),
         "timestamp": m.group("ts"),
         "retry": int(m.group("retry") or 0),
     }
@@ -212,12 +248,22 @@ def load_run_record(result_dir: Path | str) -> RunRecord:
             trust_rows=int(meta.get("trust_rows", 0)),
             has_gt=bool(meta.get("has_gt", False)),
             init_ok=bool(meta.get("init_ok", False)),
+            ablate=str(meta.get("ablate", "") or ""),
+            ablate_variant=str(meta.get("ablate_variant") or ablate_spec_to_variant(meta.get("ablate", ""))),
         )
         return rec
 
     parsed = parse_result_dirname(path.name)
     if not parsed:
-        parsed = {"seq": path.name, "mode": "unknown", "degrade": "", "timestamp": "", "retry": 0}
+        parsed = {
+            "seq": path.name,
+            "mode": "unknown",
+            "degrade": "",
+            "ablate": "",
+            "ablate_variant": "full",
+            "timestamp": "",
+            "retry": 0,
+        }
 
     summary = _read_key_value(path / "metrics" / "summary.txt")
     traj = path / "trajectory_tum.txt"
@@ -227,7 +273,7 @@ def load_run_record(result_dir: Path | str) -> RunRecord:
     init_ok = log.is_file() and "successful initialization" in log.read_text(encoding="utf-8", errors="replace")
 
     degrade = parsed.get("degrade", "")
-    return RunRecord(
+    rec = RunRecord(
         result_dir=str(path),
         seq=parsed["seq"],
         mode=parsed["mode"],
@@ -245,7 +291,10 @@ def load_run_record(result_dir: Path | str) -> RunRecord:
         trust_rows=int(trust.get("trust_rows", 0)),
         has_gt=(path / "metrics" / "summary.txt").is_file(),
         init_ok=init_ok,
+        ablate=parsed.get("ablate", ""),
+        ablate_variant=parsed.get("ablate_variant", "full"),
     )
+    return rec
 
 
 def write_run_meta(
@@ -254,17 +303,21 @@ def write_run_meta(
     seq: str,
     mode: str,
     degrade: str = "",
+    ablate: str = "",
     start_offset: int | None = None,
     trust_tau: float | None = None,
     retry: int = 0,
 ) -> Path:
     out_dir = out_dir.resolve()
     rec = load_run_record(out_dir)
+    ablate = ablate.strip()
     meta = {
         "seq": seq,
         "mode": mode,
         "degrade": degrade,
         "degrade_label": degrade_spec_to_label(degrade),
+        "ablate": ablate,
+        "ablate_variant": ablate_spec_to_variant(ablate),
         "timestamp": parse_result_dirname(out_dir.name) or {},
         "start_offset": start_offset,
         "trust_tau": trust_tau,
@@ -495,12 +548,122 @@ def split_clean_degraded(rows: list[CompareRecord]) -> tuple[list[CompareRecord]
     return clean, degraded
 
 
+@dataclass
+class AblationGroup:
+    seq: str
+    degrade: str = ""
+    degrade_label: str = "clean"
+    variants: dict[str, RunRecord] = field(default_factory=dict)
+
+    def full_ape(self) -> float | None:
+        full = self.variants.get("full")
+        return full.ape_rmse_m if full else None
+
+
+def load_ablation_manifest(batch_dir: Path) -> list[AblationGroup]:
+    batch_dir = batch_dir.resolve()
+    groups: dict[tuple[str, str], AblationGroup] = {}
+    manifest = batch_dir / "manifest.jsonl"
+    if not manifest.is_file():
+        return []
+    for line in manifest.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        adaptive_dir = row.get("adaptive_dir") or row.get("result_dir")
+        if not adaptive_dir or row.get("status") != "ok":
+            continue
+        seq = row.get("seq", "")
+        degrade = row.get("degrade") or ""
+        key = (seq, degrade)
+        if key not in groups:
+            groups[key] = AblationGroup(
+                seq=seq,
+                degrade=degrade,
+                degrade_label=row.get("degrade_label") or degrade_spec_to_label(degrade),
+            )
+        rec = load_run_record(adaptive_dir)
+        variant = row.get("ablate_variant") or ablate_spec_to_variant(row.get("ablate", ""))
+        groups[key].variants[variant] = rec
+    return list(groups.values())
+
+
+def scan_ablation_results(results_root: Path) -> list[AblationGroup]:
+    groups: dict[tuple[str, str], AblationGroup] = {}
+    for child in sorted(results_root.iterdir()):
+        if not child.is_dir() or child.name == "batches":
+            continue
+        rec = load_run_record(child)
+        if rec.mode != "adaptive":
+            continue
+        key = (rec.seq, rec.degrade)
+        if key not in groups:
+            groups[key] = AblationGroup(
+                seq=rec.seq,
+                degrade=rec.degrade,
+                degrade_label=rec.degrade_label,
+            )
+        groups[key].variants[rec.ablate_variant] = rec
+    return [g for g in groups.values() if len(g.variants) > 1 or "full" in g.variants]
+
+
+def render_ablation_markdown(groups: list[AblationGroup], *, title: str = "Ablation f₁–f₄") -> str:
+    lines: list[str] = [f"## {title}", ""]
+    header = "| Seq | Условие | full | w/o f₁ | w/o f₂ | w/o f₃ | w/o f₄ | Δ worst vs full |"
+    sep = "|-----|---------|------|--------|--------|--------|--------|-----------------|"
+    lines.extend([header, sep])
+    for group in sorted(groups, key=lambda g: (g.seq, g.degrade)):
+        cells: list[str] = []
+        full_ape = group.full_ape()
+        worst_delta = None
+        for variant in ABLATION_VARIANTS:
+            rec = group.variants.get(variant)
+            ape = rec.ape_rmse_m if rec and not rec.diverged else None
+            cells.append(fmt_m(ape))
+            if variant != "full" and ape is not None and full_ape is not None:
+                delta = (ape / full_ape - 1.0) * 100.0 if full_ape > 0 else None
+                if delta is not None and (worst_delta is None or delta > worst_delta):
+                    worst_delta = delta
+        lines.append(
+            f"| {group.seq} | {group.degrade_label} | "
+            + " | ".join(cells)
+            + f" | {fmt_pct(worst_delta)} |"
+        )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_ablation_csv(groups: list[AblationGroup]) -> str:
+    import io
+
+    out = io.StringIO()
+    writer = csv.writer(out)
+    writer.writerow(["seq", "degrade", "degrade_label", "variant", "ape_rmse_m", "rpe_rmse_m", "c_mean", "result_dir"])
+    for group in sorted(groups, key=lambda g: (g.seq, g.degrade)):
+        for variant in ABLATION_VARIANTS:
+            rec = group.variants.get(variant)
+            if not rec:
+                continue
+            writer.writerow([
+                group.seq,
+                group.degrade,
+                group.degrade_label,
+                variant,
+                rec.ape_rmse_m if rec.ape_rmse_m is not None else "",
+                rec.rpe_rmse_m if rec.rpe_rmse_m is not None else "",
+                rec.c_mean if rec.c_mean is not None else "",
+                rec.result_dir,
+            ])
+    return out.getvalue()
+
+
 def cmd_write_meta(argv: list[str]) -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--dir", type=Path, required=True)
     p.add_argument("--seq", required=True)
     p.add_argument("--mode", choices=["baseline", "adaptive"], required=True)
     p.add_argument("--degrade", default="")
+    p.add_argument("--ablate", default="")
     p.add_argument("--start-offset", type=int, default=None)
     p.add_argument("--trust-tau", type=float, default=None)
     p.add_argument("--retry", type=int, default=0)
@@ -510,6 +673,7 @@ def cmd_write_meta(argv: list[str]) -> int:
         seq=args.seq,
         mode=args.mode,
         degrade=args.degrade,
+        ablate=args.ablate,
         start_offset=args.start_offset,
         trust_tau=args.trust_tau,
         retry=args.retry,

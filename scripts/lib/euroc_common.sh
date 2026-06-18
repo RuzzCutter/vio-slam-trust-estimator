@@ -139,6 +139,7 @@ euroc_prepare_adaptive_config() {
   local out_dir="$1"
   local trust_log="$2"
   local trust_tau="${3:-}"
+  local ablate="${4:-}"
   local trust_cfg_dir
   trust_cfg_dir="$(aspiranture_root)/ws_vins/src/open_vins/config/euroc_mav_trust"
   cp "${trust_cfg_dir}/kalibr_imu_chain.yaml" "${out_dir}/"
@@ -148,6 +149,12 @@ euroc_prepare_adaptive_config() {
   if [[ -n "${trust_tau}" ]]; then
     sed -i "s|^trust_tau:.*|trust_tau: ${trust_tau}|" "${out_dir}/estimator_config.yaml"
   fi
+  local feat
+  for feat in f1 f2 f3 f4; do
+    if [[ " ${ablate} " == *" ${feat} "* ]]; then
+      sed -i "s|^trust_use_${feat}:.*|trust_use_${feat}: false|" "${out_dir}/estimator_config.yaml"
+    fi
+  done
   echo "${out_dir}/estimator_config.yaml"
 }
 
