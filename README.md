@@ -7,6 +7,11 @@
 
 ---
 
+## Зависимости
+
+Ubuntu 24.04, ROS 2 Jazzy, Ceres, OpenCV, Python venv (`evo`, `rosbags`, `opencv-python`). Подробности: `scripts/setup_env.sh`.
+
+
 ## Быстрый старт
 
 ```bash
@@ -110,20 +115,6 @@ bash scripts/run_euroc.sh adaptive MH_01_easy --viz
 
 ---
 
-## Режим «Сравнение» (`--mode compare`)
-
-Последовательно запускает **baseline**, затем **adaptive** на одной последовательности с одинаковыми параметрами bag.
-
-**Почему без RViz:** оба прогона идут **headless**, чтобы:
-- нагрузка на CPU/GPU была одинаковой;
-- ATE сравнивался честно (RViz может влиять на realtime);
-- не открывалось два окна подряд.
-
-RViz доступен только в одиночном режиме: `--mode adaptive --viz` или `bash scripts/run_euroc.sh adaptive ... --viz`.
-
-После прогонов с `--eval` выводится таблица APE/RPE и вердикт по гипотезе (на чистых vs деградированных данных).
-
----
 
 ## Последовательности EuRoC
 
@@ -138,45 +129,6 @@ Offset, GT, путь к bag читаются реестром (`scripts/lib/data
 | **MH_04_difficult** | Основной benchmark | 15 с | **да** |
 | **MH_05_difficult** | Второй сложный сценарий | 5 с | **да** |
 
-### Почему нет GT для MH_01 / MH_02 / MH_03
-
-**Bag с камерой и IMU** для всех MH_0x в EuRoC есть и скачивается нормально.  
-**Ground truth для ATE** в этом проекте — готовые текстовые траектории OpenVINS в  
-`ws_vins/src/open_vins/ov_data/euroc_mav/`.
-
-Авторы OpenVINS положили туда **не все** последовательности EuRoC, а подмножество для своих бенчмарков:
-
-| Machine Hall | Файл GT в `ov_data` |
-|--------------|---------------------|
-| MH_01, MH_02, MH_03 | **нет** |
-| MH_04, MH_05 | `MH_04_difficult.txt`, `MH_05_difficult.txt` |
-
-Vicon Room (V1_*, V2_*) — GT-файлы в `ov_data` **есть**, но bag'и в minimal/full не скачиваются.
-
-Исходный EuRoC содержит GT (CSV) для всех записей, но для MH_01–03 его нужно **конвертировать в TUM** и указать в `datasets_custom.yaml` (`gt_file: /path/to/gt.txt`), если нужен ATE.
-
-При `--eval` без GT:
-
-```
-! Ground truth для MH_02_easy недоступен — ATE пропущен
-```
-
-### Предупреждение «траектория расходится»
-
-Скрипт `traj_stats.py` помечает траекторию как расходящуюся, если:
-- любая координата |x|, |y| или |z| > **50 м**, или
-- скачок между соседними позами > **5 м**.
-
-Сообщение `max координата 1912 m` означает, что фильтр **потерял трекинг** (типичный сбой VIO, не «особенность MH_01»). Возможные причины:
-- слишком короткий прогон (60 с при offset 40 с → ~20 с полёта после инициализации);
-- ошибка инициализации (см. `openvins.log`);
-- баг или неверный конфиг (редко после успешных smoke-тестов).
-
-**Рекомендация:** для сравнения baseline/adaptive — MH_04, полный bag, `--eval`; MH_01 — только smoke «запускается ли VIO».
-
-На **MH_04** прогон с `--start-offset 0` включает фазу подъёма дрона: init проходит с задержкой во время движения, фильтр часто расходится (path ~30 km, ATE n/a). Используйте offset по умолчанию (15 с) или явно `--start-offset 15`.
-
-При расхождении траектории `run_euroc.sh` автоматически повторяет прогон (до 3 раз). Это нормально для MSCKF на MH_04 — baseline без trust иногда нестабилен на «холодном» старте ROS.
 
 ---
 
@@ -227,6 +179,9 @@ datasets/results/<SEQ>_<mode>_<YYYYMMDD_HHMMSS>/
 | `metrics/eval.log` | при `--eval` | полный вывод evo |
 | `metrics/ape.zip`, `rpe.zip` | при `--eval` | результаты evo |
 | `run_meta.json` | оба | seq/mode/degrade, метрики, diverged, c̄ (для batch) |
+| `trust_map/trust_map.png` | adaptive | 2D-карта C(x,y) + траектория |
+| `trust_map/trust_along_path.png` | adaptive | c(t) и траектория, раскрашенная по c |
+| `trust_map/trust_grid.npz` | adaptive | сетка C(x,y) для анализа |
 
 Строка `RESULT_DIR=...` в конце прогона — маркер для `run_demo.py`.
 
@@ -268,7 +223,8 @@ python3 scripts/degrade_dataset.py --input frames/ --output out/ --type gaussian
 | `run_euroc.sh` | baseline/adaptive прогон EuRoC |
 | `run_demo.py` | интерактивный demo (UI, датасеты, расширенные параметры) |
 | `run_batch.py` | пакетные compare-прогоны по YAML-плану (без наблюдения) |
-| `build_tables.py` | таблицы ATE/RPE для статьи (md / LaTeX / csv) |
+| `build_tables.py` | таблицы ATE/RPE (md / LaTeX / csv) |
+| `build_trust_map.py` | 2D-карта достоверности C(x,y) |
 | `lib/run_results.py` | разбор каталогов результатов, manifest, вердикт |
 | `lib/datasets_registry.py` | реестр датасетов (YAML → offset/GT/bag) |
 | `degrade_ros2_bag.py` | деградация камер в ROS2 bag |
@@ -307,7 +263,7 @@ colcon build --packages-select ov_msckf --symlink-install
 
 ---
 
-## Пакетные прогоны и таблицы для статьи
+## Пакетные прогоны и таблицы
 
 План прогонов: `config/batch_paper.yaml` (MH_04/05, clean + D1 + D3).
 
@@ -352,6 +308,28 @@ python3 scripts/build_tables.py --batch datasets/results/batches/ablation_d1_...
 
 После изменений в `TrustEstimator` пересобрать: `colcon build --packages-select ov_msckf --symlink-install`.
 
+---
+
+## Карта достоверности 2D
+
+После каждого **adaptive**-прогона карта строится автоматически из `trust_log.csv` + `trajectory_tum.txt`.
+
+```bash
+# Вручную для существующего прогона
+python3 scripts/build_trust_map.py --result-dir datasets/results/MH_04_difficult_adaptive_...
+
+# Все adaptive-прогоны в results/
+python3 scripts/build_trust_map.py --scan datasets/results
+
+# Точная формула с ядром (медленнее на больших сетках)
+python3 scripts/build_trust_map.py --result-dir ... --method kernel --radius 1.0
+
+# Отключить автогенерацию
+bash scripts/run_euroc.sh adaptive MH_04_difficult --no-trust-map
+```
+
+Параметры: `--grid-n 48`, `--cell-size 0.5`, `--c-threshold 0.4` (контур зон низкого trust).
+
 Зависимость batch-планов: `pip install pyyaml` (в venv).
 
 ---
@@ -365,7 +343,7 @@ python3 scripts/run_demo.py --quick
 # Демо с RViz
 python3 scripts/run_demo.py --mode adaptive --seq MH_01_easy --duration 60 --viz
 
-# Сравнение для статьи (чистые данные)
+# Сравнение (чистые данные)
 python3 scripts/run_demo.py --mode compare --seq MH_04_difficult --eval
 
 # Проверка гипотезы (деградация)
@@ -375,7 +353,7 @@ python3 scripts/run_demo.py --mode compare --seq MH_04_difficult --degrade gauss
 bash scripts/run_euroc.sh baseline MH_05_difficult --eval
 bash scripts/run_euroc.sh adaptive MH_05_difficult --degrade brightness:40 --eval
 
-# Batch для таблиц статьи
+# Batch для таблиц
 python3 scripts/run_batch.py --plan config/batch_paper.yaml
 python3 scripts/build_tables.py --batch datasets/results/batches/paper_main_... --out paper_tables/
 
@@ -386,8 +364,56 @@ python3 scripts/build_tables.py --batch datasets/results/batches/ablation_d1_...
 
 ---
 
-## Зависимости
+### Возможные проблемы
 
-Ubuntu 24.04, ROS 2 Jazzy, Ceres, OpenCV, Python venv (`evo`, `rosbags`, `opencv-python`). Подробности: `scripts/setup_env.sh`.
+## Почему сравнительный режим в демо без RViz:
+Оба прогона идут **headless**, чтобы:
+- нагрузка на CPU/GPU была одинаковой;
+- ATE сравнивался честно (RViz может влиять на realtime);
+- не открывалось два окна подряд.
+
+RViz доступен только в одиночном режиме: `--mode adaptive --viz` или `bash scripts/run_euroc.sh adaptive ... --viz`.
+
+## Датасеты не скачиваются
 
 Старый сервер `robotics.ethz.ch` часто недоступен; датасеты — [ETH Research Collection](https://doi.org/10.3929/ethz-b-000690084).
+
+## Почему нет GT для MH_01 / MH_02 / MH_03
+
+**Bag с камерой и IMU** для всех MH_0x в EuRoC есть и скачивается нормально.  
+**Ground truth для ATE** в этом проекте — готовые текстовые траектории OpenVINS в  
+`ws_vins/src/open_vins/ov_data/euroc_mav/`.
+
+Авторы OpenVINS положили туда **не все** последовательности EuRoC, а подмножество для своих бенчмарков:
+
+| Machine Hall | Файл GT в `ov_data` |
+|--------------|---------------------|
+| MH_01, MH_02, MH_03 | **нет** |
+| MH_04, MH_05 | `MH_04_difficult.txt`, `MH_05_difficult.txt` |
+
+Vicon Room (V1_*, V2_*) — GT-файлы в `ov_data` **есть**, но bag'и в minimal/full не скачиваются.
+
+Исходный EuRoC содержит GT (CSV) для всех записей, но для MH_01–03 его нужно **конвертировать в TUM** и указать в `datasets_custom.yaml` (`gt_file: /path/to/gt.txt`), если нужен ATE.
+
+При `--eval` без GT:
+
+```
+! Ground truth для MH_02_easy недоступен — ATE пропущен
+```
+
+## Предупреждение «траектория расходится»
+
+Скрипт `traj_stats.py` помечает траекторию как расходящуюся, если:
+- любая координата |x|, |y| или |z| > **50 м**, или
+- скачок между соседними позами > **5 м**.
+
+Сообщение `max координата 1912 m` означает, что фильтр **потерял трекинг** (типичный сбой VIO, не «особенность MH_01»). Возможные причины:
+- слишком короткий прогон (60 с при offset 40 с → ~20 с полёта после инициализации);
+- ошибка инициализации (см. `openvins.log`);
+- баг или неверный конфиг (редко после успешных smoke-тестов).
+
+**Рекомендация:** для сравнения baseline/adaptive — MH_04, полный bag, `--eval`; MH_01 — только smoke «запускается ли VIO».
+
+На **MH_04** прогон с `--start-offset 0` включает фазу подъёма дрона: init проходит с задержкой во время движения, фильтр часто расходится (path ~30 km, ATE n/a). Используйте offset по умолчанию (15 с) или явно `--start-offset 15`.
+
+При расхождении траектории `run_euroc.sh` автоматически повторяет прогон (до 3 раз). Это нормально для MSCKF на MH_04 — baseline без trust иногда нестабилен на «холодном» старте ROS.

@@ -20,6 +20,7 @@ DEGRADE=""
 START_OFFSET=""
 TRUST_TAU=""
 ABLATE=""
+BUILD_TRUST_MAP=true
 RVIZ=false
 EVAL=false
 VERBOSE=true
@@ -41,6 +42,7 @@ Options:
   --start-offset S Start bag playback at S seconds (default: from config/datasets.yaml)
   --trust-tau T    Override trust_tau for adaptive (default: 5.0 from config)
   --ablate FX      Ablation: disable trust feature f1|f2|f3|f4 (repeatable)
+  --no-trust-map   Skip 2D trust map generation (adaptive)
   --viz            Open RViz + auto-play bag (single terminal)
   --eval           Compute ATE/RPE after run (needs GT + evo)
   --quiet          Less console output
@@ -110,6 +112,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --viz) RVIZ=true; shift ;;
+    --no-trust-map) BUILD_TRUST_MAP=false; shift ;;
     --eval) EVAL=true; shift ;;
     --quiet) VERBOSE=false; shift ;;
     --retries)
@@ -297,6 +300,7 @@ finish() {
   local trust_arg=""
   [[ "${MODE}" == "adaptive" ]] && trust_arg="${TRUST_LOG}"
   export EUROC_RUN_START_OFFSET="${START_OFFSET}"
+  export EUROC_BUILD_TRUST_MAP="${BUILD_TRUST_MAP}"
   euroc_show_final_summary "${MODE}" "${SEQ}" "${OUT_DIR}" "${TRAJ_FILE}" "${trust_arg}" "${EVAL}"
 
   local retry_n=0 trust_tau_args=()

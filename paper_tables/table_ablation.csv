@@ -1,0 +1,21 @@
+seq,degrade,degrade_label,variant,ape_rmse_m,rpe_rmse_m,c_mean,result_dir
+MH_04_difficult,brightness:40,D3 bright +40%,full,0.785038,0.211664,0.6095810282485874,/home/g-tancyura/aspiranture/datasets/results/MH_04_difficult_adaptive_brightness_40_20260618_205042_retry2
+MH_04_difficult,brightness:40,D3 bright +40%,f1,0.368323,0.177941,0.5868544981949463,/home/g-tancyura/aspiranture/datasets/results/MH_04_difficult_adaptive_nof1_brightness_40_20260618_211903
+MH_04_difficult,brightness:40,D3 bright +40%,f2,0.402572,0.098063,0.6322741161676666,/home/g-tancyura/aspiranture/datasets/results/MH_04_difficult_adaptive_nof2_brightness_40_20260618_212050
+MH_04_difficult,brightness:40,D3 bright +40%,f3,0.577546,0.157384,0.8407309604221642,/home/g-tancyura/aspiranture/datasets/results/MH_04_difficult_adaptive_nof3_brightness_40_20260618_212238_retry3
+MH_04_difficult,brightness:40,D3 bright +40%,f4,0.438146,0.211096,0.5260617859514688,/home/g-tancyura/aspiranture/datasets/results/MH_04_difficult_adaptive_nof4_brightness_40_20260618_212750_retry2
+MH_04_difficult,gaussian:5,D1 blur σ=5,full,2.630334,0.331285,0.6358655283018871,/home/g-tancyura/aspiranture/datasets/results/MH_04_difficult_adaptive_gaussian_5_20260618_204853
+MH_04_difficult,gaussian:5,D1 blur σ=5,f1,0.445044,0.182555,0.5748908230337075,/home/g-tancyura/aspiranture/datasets/results/MH_04_difficult_adaptive_nof1_gaussian_5_20260618_211011
+MH_04_difficult,gaussian:5,D1 blur σ=5,f2,0.342947,0.123942,0.6208854704184704,/home/g-tancyura/aspiranture/datasets/results/MH_04_difficult_adaptive_nof2_gaussian_5_20260618_211158_retry2
+MH_04_difficult,gaussian:5,D1 blur σ=5,f3,0.787858,0.166617,0.8480068113207551,/home/g-tancyura/aspiranture/datasets/results/MH_04_difficult_adaptive_nof3_gaussian_5_20260618_211528
+MH_04_difficult,gaussian:5,D1 blur σ=5,f4,0.611681,0.211905,0.5278072872023812,/home/g-tancyura/aspiranture/datasets/results/MH_04_difficult_adaptive_nof4_gaussian_5_20260618_211716
+MH_05_difficult,brightness:40,D3 bright +40%,full,0.323344,0.090936,0.6629859418859655,/home/g-tancyura/aspiranture/datasets/results/MH_05_difficult_adaptive_brightness_40_20260618_210033
+MH_05_difficult,brightness:40,D3 bright +40%,f1,0.49639,0.117353,0.5913526624423959,/home/g-tancyura/aspiranture/datasets/results/MH_05_difficult_adaptive_nof1_brightness_40_20260618_214000
+MH_05_difficult,brightness:40,D3 bright +40%,f2,0.231045,0.101135,0.635921406779661,/home/g-tancyura/aspiranture/datasets/results/MH_05_difficult_adaptive_nof2_brightness_40_20260618_214210
+MH_05_difficult,brightness:40,D3 bright +40%,f3,0.449198,0.10816,0.8657383707093831,/home/g-tancyura/aspiranture/datasets/results/MH_05_difficult_adaptive_nof3_brightness_40_20260618_214419_retry2
+MH_05_difficult,brightness:40,D3 bright +40%,f4,0.391435,0.085886,0.5529557352297592,/home/g-tancyura/aspiranture/datasets/results/MH_05_difficult_adaptive_nof4_brightness_40_20260618_214834
+MH_05_difficult,gaussian:5,D1 blur σ=5,full,1.218167,0.231416,0.6406410566037737,/home/g-tancyura/aspiranture/datasets/results/MH_05_difficult_adaptive_gaussian_5_20260618_205412_retry3
+MH_05_difficult,gaussian:5,D1 blur σ=5,f1,0.770295,0.211715,0.577943277108434,/home/g-tancyura/aspiranture/datasets/results/MH_05_difficult_adaptive_nof1_gaussian_5_20260618_213121
+MH_05_difficult,gaussian:5,D1 blur σ=5,f2,0.831642,0.196938,0.6230375780821915,/home/g-tancyura/aspiranture/datasets/results/MH_05_difficult_adaptive_nof2_gaussian_5_20260618_213330
+MH_05_difficult,gaussian:5,D1 blur σ=5,f3,0.51755,0.147104,0.8535759959349598,/home/g-tancyura/aspiranture/datasets/results/MH_05_difficult_adaptive_nof3_gaussian_5_20260618_213540
+MH_05_difficult,gaussian:5,D1 blur σ=5,f4,1.00637,0.163427,0.5346425476510068,/home/g-tancyura/aspiranture/datasets/results/MH_05_difficult_adaptive_nof4_gaussian_5_20260618_213750

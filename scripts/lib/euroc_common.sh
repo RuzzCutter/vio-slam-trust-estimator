@@ -135,6 +135,35 @@ euroc_gt_path() {
   echo "${gt}"
 }
 
+euroc_build_trust_map() {
+  local trust_log="$1"
+  local traj_file="$2"
+  local out_dir="${3:-$(dirname "${trust_log}")/trust_map}"
+  local title="${4:-}"
+
+  if [[ ! -f "${trust_log}" || ! -f "${traj_file}" ]]; then
+    return 0
+  fi
+  mkdir -p "${out_dir}"
+  demo_step "·" "·" "Карта достоверности 2D..."
+  source_venv
+  local title_arg=()
+  [[ -n "${title}" ]] && title_arg=(--title "${title}")
+  if python3 "$(aspiranture_root)/scripts/build_trust_map.py" \
+      --trust "${trust_log}" \
+      --traj "${traj_file}" \
+      --out-dir "${out_dir}" \
+      "${title_arg[@]}" \
+      > "${out_dir}/build.log" 2>&1; then
+    demo_ok "Карта достоверности: ${out_dir}/trust_map.png"
+    demo_kv "c(t) along path" "${out_dir}/trust_along_path.png"
+  else
+    demo_warn "Карта достоверности не построена — см. ${out_dir}/build.log"
+    tail -3 "${out_dir}/build.log" 2>/dev/null || true
+    return 1
+  fi
+}
+
 euroc_prepare_adaptive_config() {
   local out_dir="$1"
   local trust_log="$2"
@@ -476,6 +505,9 @@ euroc_show_final_summary() {
     printf '%b✓%b Trust log: %b%s%b (%s записей, mean c≈%s)\n' \
       "${_C_GREEN}" "${_C_RESET}" "${_C_MAGENTA}" "${trust_log}" "${_C_RESET}" \
       "${n_trust}" "${mean_c}"
+    if [[ "${EUROC_BUILD_TRUST_MAP:-true}" == "true" && -f "${traj_file}" ]]; then
+      euroc_build_trust_map "${trust_log}" "${traj_file}" "${out_dir}/trust_map" "${seq}" || true
+    fi
   fi
 
   if [[ "${do_eval}" == "true" ]]; then
