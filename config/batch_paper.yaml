@@ -1,0 +1,38 @@
+# План пакетных прогонов для таблиц статьи (раздел 5).
+# Запуск: python3 scripts/run_batch.py --plan config/batch_paper.yaml
+
+id: paper_main
+description: "EuRoC MH_04/MH_05 — clean + D1 (blur) + D3 (brightness)"
+
+eval: true
+# duration: null   # null = полный bag (после start-offset)
+
+advanced:
+  retries: 3
+  trust_tau: 5.0
+  # start_offset: null  # из config/datasets.yaml для каждой seq
+
+runs:
+  # --- чистые ---
+  - seq: MH_04_difficult
+  - seq: MH_05_difficult
+
+  # --- D1 Gaussian blur ---
+  - seq: MH_04_difficult
+    degrade: gaussian:5
+  - seq: MH_04_difficult
+    degrade: gaussian:9
+  - seq: MH_05_difficult
+    degrade: gaussian:5
+  - seq: MH_05_difficult
+    degrade: gaussian:9
+
+  # --- D3 засветка ---
+  - seq: MH_04_difficult
+    degrade: brightness:40
+  - seq: MH_04_difficult
+    degrade: brightness:60
+  - seq: MH_05_difficult
+    degrade: brightness:40
+  - seq: MH_05_difficult
+    degrade: brightness:60

@@ -273,7 +273,23 @@ finish() {
   export EUROC_RUN_START_OFFSET="${START_OFFSET}"
   euroc_show_final_summary "${MODE}" "${SEQ}" "${OUT_DIR}" "${TRAJ_FILE}" "${trust_arg}" "${EVAL}"
 
-  # Marker for run_demo.py to capture output directory
+  local retry_n=0 trust_tau_args=()
+  if [[ "${OUT_DIR}" =~ _retry([0-9]+)$ ]]; then
+    retry_n="${BASH_REMATCH[1]}"
+  fi
+  if [[ -n "${TRUST_TAU}" ]]; then
+    trust_tau_args=(--trust-tau "${TRUST_TAU}")
+  fi
+  python3 "$(aspiranture_root)/scripts/lib/run_results.py" write-meta \
+    --dir "${OUT_DIR}" \
+    --seq "${SEQ}" \
+    --mode "${MODE}" \
+    --degrade "${DEGRADE}" \
+    --start-offset "${START_OFFSET}" \
+    "${trust_tau_args[@]}" \
+    --retry "${retry_n}" \
+    >/dev/null 2>&1 || true
+
   echo "RESULT_DIR=${OUT_DIR}"
 }
 

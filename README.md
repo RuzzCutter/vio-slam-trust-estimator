@@ -226,6 +226,7 @@ datasets/results/<SEQ>_<mode>_<YYYYMMDD_HHMMSS>/
 | `metrics/summary.txt` | при `--eval` | `ape_rmse_m=…`, `rpe_rmse_m=…` |
 | `metrics/eval.log` | при `--eval` | полный вывод evo |
 | `metrics/ape.zip`, `rpe.zip` | при `--eval` | результаты evo |
+| `run_meta.json` | оба | seq/mode/degrade, метрики, diverged, c̄ (для batch) |
 
 Строка `RESULT_DIR=...` в конце прогона — маркер для `run_demo.py`.
 
@@ -266,6 +267,9 @@ python3 scripts/degrade_dataset.py --input frames/ --output out/ --type gaussian
 | `traj_stats.py` | длина пути, флаг расхождения |
 | `run_euroc.sh` | baseline/adaptive прогон EuRoC |
 | `run_demo.py` | интерактивный demo (UI, датасеты, расширенные параметры) |
+| `run_batch.py` | пакетные compare-прогоны по YAML-плану (без наблюдения) |
+| `build_tables.py` | таблицы ATE/RPE для статьи (md / LaTeX / csv) |
+| `lib/run_results.py` | разбор каталогов результатов, manifest, вердикт |
 | `lib/datasets_registry.py` | реестр датасетов (YAML → offset/GT/bag) |
 | `degrade_ros2_bag.py` | деградация камер в ROS2 bag |
 | `degrade_dataset.py` | деградация папки кадров (offline, задел) |
@@ -303,6 +307,43 @@ colcon build --packages-select ov_msckf --symlink-install
 
 ---
 
+## Пакетные прогоны и таблицы для статьи
+
+План прогонов: `config/batch_paper.yaml` (MH_04/05, clean + D1 + D3).
+
+```bash
+# Просмотр плана (без запуска)
+python3 scripts/run_batch.py --dry-run
+
+# Ночной batch: 10 compare × 2 прогона ≈ 20 VIO-запусков
+python3 scripts/run_batch.py --plan config/batch_paper.yaml
+
+# Продолжить прерванный batch (пропускает успешные строки manifest)
+python3 scripts/run_batch.py --resume datasets/results/batches/paper_main_YYYYMMDD_HHMMSS
+
+# Таблицы из batch
+python3 scripts/build_tables.py --batch datasets/results/batches/paper_main_... --out paper_tables/
+
+# Таблицы из уже существующих каталогов results/ (автопаринг baseline+adaptive)
+python3 scripts/build_tables.py --scan datasets/results --out paper_tables/
+```
+
+**Структура batch:**
+
+```
+datasets/results/batches/<batch_id>/
+├── batch_plan.yaml      # копия плана
+├── manifest.jsonl       # одна строка JSON на compare (dirs, APE, verdict)
+├── run_01_....log       # полный лог каждого compare
+└── batch_summary.txt
+```
+
+**Выход `build_tables.py`:** `paper_tables/table_all.md`, `table_clean.md`, `table_degraded.md`, `table_all.tex`, `table_all.csv`.
+
+Зависимость batch-планов: `pip install pyyaml` (в venv).
+
+---
+
 ## Типичные сценарии
 
 ```bash
@@ -318,9 +359,13 @@ python3 scripts/run_demo.py --mode compare --seq MH_04_difficult --eval
 # Проверка гипотезы (деградация)
 python3 scripts/run_demo.py --mode compare --seq MH_04_difficult --degrade gaussian:5 --eval
 
-# Batch без меню
+# Batch без меню (одиночный прогон)
 bash scripts/run_euroc.sh baseline MH_05_difficult --eval
 bash scripts/run_euroc.sh adaptive MH_05_difficult --degrade brightness:40 --eval
+
+# Batch для таблиц статьи
+python3 scripts/run_batch.py --plan config/batch_paper.yaml
+python3 scripts/build_tables.py --batch datasets/results/batches/paper_main_... --out paper_tables/
 ```
 
 ---
