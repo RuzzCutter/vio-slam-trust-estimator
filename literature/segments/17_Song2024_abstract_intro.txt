@@ -1,0 +1,24 @@
+# Song J. et al., Sensors 2024, 24(20), 6665
+# DOI: https://doi.org/10.3390/s24206665
+# PDF не скачан автоматически (MDPI 403); текст из открытой HTML-страницы журнала.
+# Для цитирования сверяйте номера страниц с оригиналом.
+
+## Abstract
+
+Simultaneous localization and mapping, a critical technology for enabling the autonomous driving of vehicles and mobile robots, increasingly incorporates multi-sensor configurations. Inertial measurement units (IMUs), known for their ability to measure acceleration and angular velocity, are widely utilized for motion estimation due to their cost efficiency. However, the inherent noise in IMU measurements necessitates the integration of additional sensors to facilitate spatial understanding for mapping. Visual–inertial odometry (VIO) is a prominent approach that combines cameras with IMUs, offering high spatial resolution while maintaining cost-effectiveness. In this paper, we introduce our uncertainty-aware depth network (UD-Net), which is designed to estimate both depth and uncertainty maps. We propose a novel loss function for the training of UD-Net, and unreliable depth values are filtered out to improve VIO performance based on the uncertainty maps. Experiments were conducted on the KITTI dataset and our custom dataset acquired from various driving scenarios. Experimental results demonstrated that the proposed VIO algorithm based on UD-Net outperforms previous methods with a significant margin.
+
+## Introduction (excerpt)
+
+Recent advancements in robotics have enabled the utilization of mobile robots across various industries with ongoing developments aimed at further enhancing these technologies and expanding their application fields. [...] Therefore, recent SLAM techniques propose using IMU to measure acceleration and angular velocity for estimating positional changes. These techniques often incorporate additional sensors to compensate for the inherent noise characteristics of IMU. [...] Therefore, various VIO algorithms, which use cameras and IMUs to estimate the trajectory of mobile robots, have been proposed recently. However, VIO algorithms have continued to demonstrate lower odometry estimation performance compared to LiDAR-based methods, which directly utilize accurate 3D information.
+
+Ideally, we would hope that all estimations from deep learning models are error-free, but this is practically impossible. Therefore, estimating uncertainty is necessary to determine the reliability of the estimation results. In deep learning, two primary types of uncertainty are aleatoric uncertainty from noise in the training data and epistemic uncertainty from ambiguity in selecting the most appropriate model structure and parameters for a given task.
+
+## Key contributions (from paper)
+
+1. UD-Net — shared encoder–decoder for depth and uncertainty; novel coupled loss functions.
+2. Integration with feature-based VIO (VINS-RGBD) with uncertainty-based filtering of depth.
+3. Evaluation on KITTI and custom underground parking lot dataset.
+
+## Relevance for our work
+
+Прямой аналог постановки: оценка неопределённости глубины/измерений и использование её для повышения устойчивости VIO — близко к нашей адаптивной модели доверия c(t) и признакам f₁–f₄.

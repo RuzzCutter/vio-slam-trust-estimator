@@ -1,0 +1,20 @@
+# Kim J., Kim H., Myung H. Robust Visual Odometry in Adverse Weather Conditions
+# IEEE Robotics and Automation Letters, 2021, Vol. 6, No. 2, pp. 2658–2665.
+# Статус: полный PDF в открытом доступе НЕ СКАЧАН (IEEE RA-L, paywall).
+
+## Библиографическая запись
+
+Kim J., Kim H., Myung H. Robust Visual Odometry in Adverse Weather Conditions // IEEE Robotics and Automation Letters. 2021. Vol. 6, No. 2. P. 2658-2665.
+
+## Контекст для цитирования (по теме работы)
+
+Работа относится к устойчивости визуальной одометрии в неблагоприятных погодных условиях (дождь, туман, низкая видимость). В обзоре можно сопоставить с нашей синтетической деградацией blur/brightness на EuRoC как контролируемой имитацией ухудшения качества изображения.
+
+## Смежные открытые источники (НЕ заменяют #19, только контекст)
+
+- VPR-Bench (Zaffar et al., 2021): motion-blur и extreme weather как нерепрезентированные сценарии в бенчмарках.
+- Scaramuzza, VO Part II: outliers из-за blur и изменения освещения.
+
+## Действие
+
+Получить официальный PDF через IEEE Xplore / KAIST Urban Robotics Lab перед финальными формулировками прямых цитат.

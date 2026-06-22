@@ -1,0 +1,27 @@
+# Segment from 07_Li2013_MSCKF.pdf
+# Source: literature/pdf/07_Li2013_MSCKF.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+High-precision, consistent EKF-based
+      visual-inertial odometry
+       Mingyang Li and Anastasios I. Mourikis, IJRR 2013
+
+
+
+
+                                                           Ao Li
+Introduction
+• What is visual-inertial odometry (VIO) ?
+
+
+
+       The problem of motion tracking in unknown environments using
+visual and inertial sensors. (no mapping)
+Introduction
+• Main algorithms
+
+      1. Extended Kalman filter (EKF)-based methods
+
+       2. Methods utilizing iterative minimization over a window of
+states. (more accurate, but high computational cost)
+

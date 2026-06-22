@@ -1,0 +1,48 @@
+# Segment from 03_OKVIS.pdf
+# Source: literature/pdf/03_OKVIS.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+                                                                                                                                                     1
+
+
+
+   Keyframe-Based Visual-Inertial Odometry Using
+              Nonlinear Optimization
+             Stefan Leutenegger∗ , Simon Lynen∗ , Michael Bosse∗ , Roland Siegwart∗ , and Paul Furgale∗
+                           ∗
+                             Autonomous Systems Lab (ASL), ETH Zurich, Switzerland
+
+
+                                                                      Abstract
+          Combining visual and inertial measurements has become popular in mobile robotics, since the two sensing modalities
+      offer complementary characteristics that make them the ideal choice for accurate Visual-Inertial Odometry or Simultaneous
+      Localization and Mapping (SLAM). While historically the problem has been addressed with filtering, advancements in
+      visual estimation suggest that non-linear optimization offers superior accuracy, while still tractable in complexity thanks
+      to the sparsity of the underlying problem. Taking inspiration from these findings, we formulate a rigorously probabilistic
+      cost function that combines reprojection errors of landmarks and inertial terms. The problem is kept tractable and thus
+      ensuring real-time operation by limiting the optimization to a bounded window of keyframes through marginalization.
+      Keyframes may be spaced in time by arbitrary intervals, while still related by linearized inertial terms. We present evaluation
+      results on complementary datasets recorded with our custom-built stereo visual-inertial hardware that accurately synchronizes
+      accelerometer and gyroscope measurements with imagery. A comparison of both a stereo and monocular version of our
+      algorithm with and without online extrinsics estimation is shown with respect to ground truth. Furthermore, we compare the
+      performance to an implementation of a state-of-the-art stochasic cloning sliding-window filter. This competititve reference
+      implementation performs tightly-coupled filtering-based visual-inertial odometry. While our approach declaredly demands
+      more computation, we show its superior performance in terms of accuracy.
+
+
+                                                               I. I NTRODUCTION
+   Visual and inertial measurements offer complementary properties which make them particularly suitable for fusion,
+in order to address robust and accurate localization and mapping, a primary need for any mobile robotic system. The
+rich representation of structure projected into an image, together with the accurate short-term estimates by gyroscopes
+and accelerometers contained in an IMU have been acknowledged to complement each other, with promising use-cases
+in airborne (Mourikis and Roumeliotis, 2007; Weiss et al., 2012) and automotive (Li and Mourikis, 2012a) navigation.
+Moreover, with the availability of these sensors in most smart phones, there is great interest and research activity in effective
+solutions to visual-inertial SLAM (Li et al., 2013).
+
+
+
+
+                (a) Side view of the ETH main building.                                            (b) 3D view of the building.
+
+Fig. 1. ETH main building indoor reconstruction of both structure and pose as resulting from our suggested visual-inertial odometry framework (stereo
+variant in this case, including online camera extrinsics calibration). The stereo-vision plus IMU sen

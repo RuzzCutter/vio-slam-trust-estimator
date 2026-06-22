@@ -1,0 +1,37 @@
+# Segment from 10_SuperPoint.pdf
+# Source: literature/pdf/10_SuperPoint.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+ABSTRACT
+Point
+                                                                                                              Image Pair          SuperPoint Network          Correspondence
+                                            This paper presents a self-supervised framework for                                     Interest Points
+                                         training interest point detectors and descriptors suitable
+                                         for a large number of multiple-view geometry problems in
+                                         computer vision. As opposed to patch-based neural net-
+                                         works, our fully-convolutional model operates on full-sized
+                                         images and jointly computes pixel-level interest point loca-                                Descriptors
+                                         tions and associated descriptors in one forward pass. We
+                                         introduce Homographic Adaptation, a multi-scale, multi-
+                                         homography approach for boosting interest point detec-
+                                         tion repeatability and performing cross-domain adapta-
+                                         tion (e.g., synthetic-to-real). Our model, when trained on
+                                         the MS-COCO generic image dataset using Homographic
+                                         Adaptation, is able to repeatedly detect a much richer set
+                                         of interest points than the initial pre-adapted deep model
+                                         and any other traditional corner detector. The final system
+                                         gives rise to state-of-the-art homography estimation results        Figure 1. SuperPoint for Geometric Correspondences. We
+                                         on HPatches when compared to LIFT, SIFT and ORB.                    present a fully-convolutional neural network that computes SIFT-
+                                                                                                             like 2D interest point locations and descriptors in a single forward
+
+INTRODUCTION (excerpt)
+pass and runs at 70 FPS on 480 × 640 images with a Titan X GPU.
+
+                                            The first step in geometric computer vision tasks
+                                         such as Simultaneous Localization and Mapping (SLAM),               cations labeled by human annotators.
+                                         Structure-from-Motion (SfM), camera calibration, and im-                It seems natural to similarly formulate interest point de-
+                                         age matching is to extract interest points from images. In-         tection as a large-scale supervised machine learning prob-
+                                         terest points are 2D locations in an image which are stable         lem and train the latest convolutional neural network ar-
+                                         and repeatable from different lighting conditions and view-         chitecture to detect them. Unfortunately, when compared
+                                         points. The subfield of mathematics and computer vision             to semantic tasks such as human-body keypoint estimation,
+                                         known as Multiple 

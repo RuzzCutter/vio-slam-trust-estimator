@@ -1,0 +1,28 @@
+# Segment from 15_DPT.pdf
+# Source: literature/pdf/15_DPT.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+ABSTRACT
+on the decoder and its aggregation strategy [6, 7, 50, 53].
+                                                                                                        However, it is widely recognized that the choice of back-
+                                            We introduce dense vision transformers, an architecture     bone architecture has a large influence on the capabilities
+                                         that leverages vision transformers in place of convolutional   of the overall model, as any information that is lost in the
+                                         networks as a backbone for dense prediction tasks. We as-      encoder is impossible to recover in the decoder.
+                                         semble tokens from various stages of the vision transformer        Convolutional backbones progressively downsample the
+                                         into image-like representations at various resolutions and     input image to extract features at multiple scales. Down-
+                                         progressively combine them into full-resolution predictions    sampling enables a progressive increase of the receptive
+                                         using a convolutional decoder. The transformer backbone        field, the grouping of low-level features into abstract high-
+                                         processes representations at a constant and relatively high    level features, and simultaneously ensures that memory
+                                         resolution and has a global receptive field at every stage.    and computational requirements of the network remain
+                                         These properties allow the dense vision transformer to pro-    tractable. However, downsampling has distinct drawbacks
+                                         vide finer-grained and more globally coherent predictions      that are particularly salient in dense prediction tasks: fea-
+                                         when compared to fully-convolutional networks. Our ex-         ture resolution and granularity are lost in the deeper stages
+                                         periments show that this architecture yields substantial im-   of the model and can thus be hard to recover in the decoder.
+                                         provements on dense prediction tasks, especially when a        While feature resolution and granularity may not matter for
+                                         large amount of training data is available. For monocular      some tasks, such as image classification, they are critical
+                                         depth estimation, we observe an improvement of up to 28%       for dense prediction, where the architecture should ideally
+                                         in relative performance when compared to a state-of-the-       be able to resolve features at or close to the resolution of the
+                                         art fully-convolutional network. When applied to semantic      input image.
+                                         segmentation, dense vision transformers set a new state of         Various techniques to mitigate the loss of feature gran-
+                                         the art on ADE20K with 49.02% mIoU. We further show            ularity have been proposed. These include training at
+                                         that the architecture 

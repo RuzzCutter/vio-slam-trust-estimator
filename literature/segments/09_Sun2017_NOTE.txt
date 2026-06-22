@@ -1,0 +1,20 @@
+# Позиция #9 списка литературы
+# Sun K., Messikommer N., Scaramuzza D. Robust Visual Odometry by Outlier Rejection and Probabilistic Modeling
+# Proc. Robotics: Science and Systems, 2017.
+
+## ВАЖНО
+
+Оригинальная статья с таким названием и составом авторов в открытых proceedings RSS 2017 (roboticsproceedings.org/rss13) НЕ НАЙДЕНА.
+
+В каталоге `literature/pdf/` сохранён **заменитель** для темы outlier rejection / RANSAC:
+
+- `09_Sun2017_substitute_VO_PartII.pdf` — Fraundorfer & Scaramuzza, «Visual Odometry: Part II — Matching, Robustness, and Applications», IEEE RAM 2012 (tutorial).
+
+Сегмент для цитирования: `09_outlier_RANSAC_key.txt`
+
+## Рекомендация перед публикацией
+
+1. Уточнить у автора статьи корректную библиографическую запись #9 (возможна опечатка года/конференции/авторов).
+2. Либо заменить ссылку на проверяемый источник по robust VO / probabilistic outlier rejection, например:
+   - Fraundorfer & Scaramuzza, VO Part II (RANSAC, outliers, blur);
+   - Peretroukhin et al., PROBE (predictive robust estimation for VIO), arXiv:1708.00174.

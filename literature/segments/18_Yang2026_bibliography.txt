@@ -1,0 +1,15 @@
+# Yang J. et al., Measurement 2026, Vol. 258, Art. 119054
+# Semantic Stereo Visual Estimator Based on VINS-Fusion for Restricted Aquatic Environments
+# Статус: полный текст в открытом доступе НЕ НАЙДЕН (журнал Measurement, 2026).
+
+## Библиографическая запись (из Списка_литературы.txt)
+
+Yang J., Yin Y., Jing Q. Semantic Stereo Visual Estimator Based on VINS-Fusion for Restricted Aquatic Environments // Measurement. 2026. Vol. 258. Art. 119054.
+
+## Примечание для статьи
+
+Использовать как контекстную ссылку на применение VINS-Fusion в специализированных средах. Перед финальной подачей получить PDF через библиотеку / ScienceDirect по DOI (уточнить у издателя).
+
+## Предполагаемая тематика (по названию)
+
+Семантическое стерео-VIO на базе VINS-Fusion для ограниченных водных сред — релевантно обсуждению устойчивости VIO в неблагоприятных/специфических условиях наблюдения.

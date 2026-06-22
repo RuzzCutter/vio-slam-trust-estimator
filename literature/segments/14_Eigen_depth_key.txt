@@ -1,0 +1,35 @@
+# Segment from 14_Eigen_Depth.pdf
+# Source: literature/pdf/14_Eigen_Depth.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+ABSTRACT
+Predicting depth is an essential component in understanding the 3D geometry of
+                                                a scene. While for stereo images local correspondence suffices for estimation,
+                                                finding depth relations from a single image is less straightforward, requiring in-
+                                                tegration of both global and local information from various cues. Moreover, the
+                                                task is inherently ambiguous, with a large source of uncertainty coming from the
+                                                overall scale. In this paper, we present a new method that addresses this task by
+                                                employing two deep network stacks: one that makes a coarse global prediction
+                                                based on the entire image, and another that refines this prediction locally. We also
+                                                apply a scale-invariant error to help measure depth relations rather than scale. By
+                                                leveraging the raw datasets as large sources of training data, our method achieves
+                                                state-of-the-art results on both NYU Depth and KITTI, and matches detailed depth
+                                                boundaries without the need for superpixelation.
+
+INTRODUCTION (excerpt)
+Estimating depth is an important component of understanding geometric relations within a scene. In
+                                       turn, such relations help provide richer representations of objects and their environment, often lead-
+                                       ing to improvements in existing recognition tasks [18], as well as enabling many further applications
+                                       such as 3D modeling [16, 6], physics and support models [18], robotics [4, 14], and potentially rea-
+                                       soning about occlusions.
+                                       While there is much prior work on estimating depth based on stereo images or motion [17], there has
+                                       been relatively little on estimating depth from a single image. Yet the monocular case often arises in
+                                       practice: Potential applications include better understandings of the many images distributed on the
+                                       web and social media outlets, real estate listings, and shopping sites. These include many examples
+                                       of both indoor and outdoor scenes.
+                                       There are likely several reasons why the monocular case has not yet been tackled to the same degree
+                                       as the stereo one. Provided accurate image correspondences, depth can be recovered deterministi-
+                                       cally in the stereo case [5]. Thus, stereo depth estimation can be reduced to developing robust image
+                                       point correspondences — which can often be found using local appearance features. By contrast,
+                                       estimating depth from a single image requires the use of monocular depth cues such as line angles
+                                       and perspective, object sizes, image position, and

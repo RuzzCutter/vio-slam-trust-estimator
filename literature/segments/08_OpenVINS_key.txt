@@ -1,0 +1,32 @@
+# Segment from 08_OpenVINS.pdf
+# Source: literature/pdf/08_OpenVINS.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+ABSTRACT
+— In this paper, we present an open platform, termed          deep understanding, thus accelerating VINS research and
+OpenVINS, for visual-inertial estimation research for both the           development in the field. Moreover, these systems have many
+academic community and practitioners from industry. The open             hard-coded assumptions or features that require an intricate
+sourced codebase provides a foundation for researchers and
+engineers to quickly start developing new capabilities for their         understanding of the codebases in order to adapt them to
+visual-inertial systems. This codebase has out of the box support        the sensor systems at hand. This, along with inadequate
+for commonly desired visual-inertial estimation features, which          documentation and support, limits their wide adoption in
+include: (i) on-manifold sliding window Kalman filter, (ii)              different applications.
+online camera intrinsic and extrinsic calibration, (iii) camera
+to inertial sensor time offset calibration, (iv) SLAM landmarks             To fill the aforementioned void in the community and to
+with different representations and consistent First-Estimates            promote the VINS research in robotics and beyond, in this
+Jacobian (FEJ) treatments, (v) modular type system for state             paper, we present an extendable, open sourced codebase that
+management, (vi) extendable visual-inertial system simulator,            is particularly designed for researchers and practitioners with
+and (vii) extensive toolbox for algorithm evaluation. Moreover,          either limited or extensive background knowledge of state
+we have also focused on detailed documentation and theoretical
+derivations to support rapid development and research, which             estimation. We provide the necessary documentation, tools,
+are greatly lacked in the current open sourced algorithms.               and theory for those who are even new to visual-inertial
+Finally, we perform comprehensive validation of the proposed             estimation, and term this collection of utilities as OpenVINS
+OpenVINS against state-of-the-art open sourced algorithms,               (OV). This codebase has been the foundation of many of
+showing its competing estimation performance.                            the recent visual-inertial estimation projects in our group at
+   • Open source:                                                        the University of Delaware, which include multi-camera [9],
+      https://github.com/rpng/open_vins
+                                                                         multi-IMU [10], visual-inertial moving object tracking [11],
+   • Documentation:
+                                                                         [12], Schmidt-based visual-inertial SLAM [13], [14], point-
+      https://docs.openvins.com
+                                                                         plane and point-line visual-inertial navigation [15], [16],

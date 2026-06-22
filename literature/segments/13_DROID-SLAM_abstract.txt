@@ -1,0 +1,43 @@
+# Segment from 13_DROID-SLAM.pdf
+# Source: literature/pdf/13_DROID-SLAM.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+                                                                                                                                                                                               1
+
+
+
+
+                                                       Towards Making Deep Learning-based
+                                                          Vulnerability Detectors Robust
+                                                Zhen Li, Jing Tang, Deqing Zou, Qian Chen, Shouhuai Xu, Chao Zhang, Yichen Li, and Hai Jin
+
+                                             Abstract—Automatically detecting software vulnerabilities in source code is an important problem that has attracted much attention. In
+                                             particular, deep learning-based vulnerability detectors, or DL-based detectors, are attractive because they do not need human experts
+                                             to define features or patterns of vulnerabilities. However, such detectors’ robustness is unclear. In this paper, we initiate the study in this
+                                             aspect by demonstrating that DL-based detectors are not robust against simple code transformations, dubbed attacks in this paper, as
+                                             these transformations may be leveraged for malicious purposes. As a first step towards making DL-based detectors robust against such
+                                             attacks, we propose an innovative framework, dubbed ZigZag, which is centered at (i) decoupling feature learning and classifier learning
+arXiv:2108.00669v2 [cs.CR] 4 Aug 2021
+
+
+
+
+                                             and (ii) using a ZigZag-style strategy to iteratively refine them until they converge to robust features and robust classifiers. Experimental
+                                             results show that the ZigZag framework can substantially improve the robustness of DL-based detectors.
+
+                                             Index Terms—Vulnerability detection, deep learning, robustness, source code.
+
+                                                                                                                     F
+
+                                        1    I NTRODUCTION
+
+
+                                        T    HE problem of detecting software vulnerabilities is yet
+                                             to be solved, as evidenced by a large number of vulner-
+                                        abilities reported in the Common Vulnerabilities and Exposures
+                                                                                                                         [5]–[8]). In this paper, we focus on static analysis-based
+                                                                                                                         vulnerability detectors. Static analysis-based detectors may
+                                                                                                                         analyze the source code in three ways: code similarity-based
+                                        (CVE) [1]. The wide reuse of open-source software and the                        [9]–[11] vs. rule-based [12]–[18] vs. machine learning-based
+                                        increasing complexity of software supply-chains make the                         [19]–[22] approaches. A recent development in machine
+          

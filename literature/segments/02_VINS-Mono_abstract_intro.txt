@@ -1,0 +1,49 @@
+# Segment from 02_VINS-Mono.pdf
+# Source: literature/pdf/02_VINS-Mono.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+                                                                                                                                                                                                1
+
+
+
+
+                                              VINS-Mono: A Robust and Versatile Monocular
+                                                    Visual-Inertial State Estimator
+                                                                                       Tong Qin, Peiliang Li, and Shaojie Shen
+
+
+
+
+                                            Abstract—A monocular visual-inertial system (VINS), con-
+                                         sisting of a camera and a low-cost inertial measurement unit
+                                         (IMU), forms the minimum sensor suite for metric six degrees-
+arXiv:1708.03852v1 [cs.RO] 13 Aug 2017
+
+
+
+
+                                         of-freedom (DOF) state estimation. However, the lack of direct
+                                         distance measurement poses significant challenges in terms of
+                                         IMU processing, estimator initialization, extrinsic calibration,
+                                         and nonlinear optimization. In this work, we present VINS-
+                                         Mono: a robust and versatile monocular visual-inertial state
+                                         estimator. Our approach starts with a robust procedure for
+                                         estimator initialization and failure recovery. A tightly-coupled,
+                                         nonlinear optimization-based method is used to obtain high
+                                         accuracy visual-inertial odometry by fusing pre-integrated IMU
+                                         measurements and feature observations. A loop detection module,                         (a) Trajectory (blue) and feature locations (red)
+                                         in combination with our tightly-coupled formulation, enables
+                                         relocalization with minimum computation overhead. We addi-
+                                         tionally perform four degrees-of-freedom pose graph optimiza-
+                                         tion to enforce global consistency. We validate the performance
+                                         of our system on public datasets and real-world experiments
+                                         and compare against other state-of-the-art algorithms. We also
+                                         perform onboard closed-loop autonomous flight on the MAV
+                                         platform and port the algorithm to an iOS-based demonstration.
+                                         We highlight that the proposed work is a reliable, complete,
+                                         and versatile system that is applicable for different applications
+                                         that require high accuracy localization. We open source our
+                                         implementations for both PCs1 and iOS mobile devices2 .
+                                            Index Terms—Monocular visual-inertial systems, state estima-
+                                         tion, sensor fusion, simultaneous localization and mapping
+                                                                                                                 

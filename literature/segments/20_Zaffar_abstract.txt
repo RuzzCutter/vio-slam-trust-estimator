@@ -1,0 +1,28 @@
+# Segment from 20_Zaffar_VPR-Bench.pdf
+# Source: literature/pdf/20_Zaffar_VPR-Bench.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+ABSTRACT
+Visual place recognition (VPR) is the process of recognising a previously visited place using visual information, often under
+varying appearance conditions and viewpoint changes and with computational constraints. VPR is related to the concepts
+of localisation, loop closure, image retrieval and is a critical component of many autonomous navigation systems ranging
+from autonomous vehicles to drones and computer vision systems. While the concept of place recognition has been around
+for many years, VPR research has grown rapidly as a field over the past decade due to improving camera hardware and its
+potential for deep learning-based techniques, and has become a widely studied topic in both the computer vision and robotics
+communities. This growth however has led to fragmentation and a lack of standardisation in the field, especially concerning
+performance evaluation. Moreover, the notion of viewpoint and illumination invariance of VPR techniques has largely been
+assessed qualitatively and hence ambiguously in the past. In this paper, we address these gaps through a new comprehensive
+open-source framework for assessing the performance of VPR techniques, dubbed “VPR-Bench”. VPR-Bench (Open-sourced
+at: https://github.com/MubarizZaffar/VPR-Bench) introduces two much-needed capabilities for VPR researchers: firstly, it
+contains a benchmark of 12 fully-integrated datasets and 10 VPR techniques, and secondly, it integrates a comprehensive
+variation-quantified dataset for quantifying viewpoint and illumination invariance. We apply and analyse popular evaluation
+metrics for VPR from both the computer vision and robotics communities, and discuss how these different metrics complement
+and/or replace each other, depending upon the underlying applications and system requirements. Our analysis reveals that
+no universal SOTA VPR technique exists, since: (a) state-of-the-art (SOTA) performance is achieved by 8 out of the 10
+techniques on at least one dataset, (b) SOTA technique in one community does not necessarily yield SOTA performance
+in the other given the differences in datasets and metrics. Furthermore, we identify key open challenges since: (c) all 10
+techniques suffer greatly in perceptually-aliased and less-structured environments, (d) all techniques suffer from viewpoint
+variance where lateral change has less effect than 3D change, and (e) directional illumination change has more adverse effects
+on matching confidence than uniform illumination change. We also present detailed meta-analyses regarding the roles of
+varying ground-truths, platforms, application requirements and technique parameters. Finally, VPR-Bench provides a unified
+implementation to deploy these VPR techniques, metrics and datasets, and is extensible through templates.

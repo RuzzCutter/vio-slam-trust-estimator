@@ -1,0 +1,16 @@
+# Burri M. et al., The EuRoC Micro Aerial Vehicle Datasets
+# International Journal of Robotics Research, 2016, Vol. 35, No. 10, pp. 1157–1163.
+# DOI: 10.1177/0278364915620033
+# PDF: закрыт (SAGE); текст abstract — с сайта журнала / ETH ASL.
+
+## Abstract
+
+This paper presents visual-inertial datasets collected on-board a micro aerial vehicle. The datasets contain synchronized stereo images, IMU measurements and accurate ground truth. The first batch of datasets facilitates the design and evaluation of visual-inertial localization algorithms on real flight data. It was collected in an industrial environment and contains millimeter accurate position ground truth from a laser tracking system. The second batch of datasets is aimed at precise 3D environment reconstruction and was recorded in a room equipped with a motion capture system. The datasets contain 6D pose ground truth and a detailed 3D scan of the environment. Eleven datasets are provided in total, ranging from slow flights under good visual conditions to dynamic flights with motion blur and poor illumination, enabling researchers to thoroughly test and evaluate their algorithms. All datasets contain raw sensor measurements, spatio-temporally aligned sensor data and ground truth, extrinsic and intrinsic calibrations and datasets for custom calibrations.
+
+## Dataset page
+
+https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets
+
+## Relevance for our work
+
+EuRoC — основной бенчмарк эксперимента (MH_04_difficult, MH_05_difficult). В статье цитировать при описании протокола и характеристик деградации (blur, brightness) относительно «чистых» последовательностей датасета.

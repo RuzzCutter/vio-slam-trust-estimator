@@ -1,0 +1,65 @@
+# Segment from 05_ORB-SLAM2.pdf
+# Source: literature/pdf/05_ORB-SLAM2.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+                                                               This paper has been accepted for publication in IEEE Transactions on Robotics.
+
+
+                                                                                     DOI: 10.1109/TRO.2017.2705103
+                                                                          IEEE Xplore: http://ieeexplore.ieee.org/document/7946260/
+
+
+
+                                            c 2017 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any
+                                         current or future media, including reprinting /republishing this material for advertising or promotional purposes, creating new
+                                         collective works, for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other
+                                         works.
+arXiv:1610.06475v2 [cs.RO] 19 Jun 2017
+                                                                                                                                                          1
+
+
+
+
+           ORB-SLAM2: an Open-Source SLAM System for
+              Monocular, Stereo and RGB-D Cameras
+                                                     Raúl Mur-Artal and Juan D. Tardós
+
+
+
+   Abstract—We present ORB-SLAM2 a complete SLAM system
+for monocular, stereo and RGB-D cameras, including map reuse,
+loop closing and relocalization capabilities. The system works in
+real-time on standard CPUs in a wide variety of environments
+from small hand-held indoors sequences, to drones flying in
+industrial environments and cars driving around a city. Our
+back-end based on bundle adjustment with monocular and stereo
+observations allows for accurate trajectory estimation with metric
+scale. Our system includes a lightweight localization mode that
+leverages visual odometry tracks for unmapped regions and
+matches to map points that allow for zero-drift localization. The
+evaluation on 29 popular public sequences shows that our method
+achieves state-of-the-art accuracy, being in most cases the most
+accurate SLAM solution. We publish the source code, not only
+for the benefit of the SLAM community, but with the aim of
+being an out-of-the-box SLAM solution for researchers in other
+fields.
+
+
+                          I. I NTRODUCTION
+    Simultaneous Localization and Mapping (SLAM) has been
+a hot research topic in the last two decades in the Computer Vi-               (a) Stereo input: trajectory and sparse reconstruction of an urban environment
+                                                                               with multiple loop closures.
+sion and Robotics communities, and has recently attracted the
+attention of high-technological companies. SLAM techniques
+build a map of an unknown environment and localize the
+sensor in the map with a strong focus on real-time operation.
+Among the different sensor modalities, cameras are cheap
+and provide rich information of the environment that allows
+for robust and accurate place recognition. Therefore Visual
+SLAM solutions, where the main sensor is a camera, are of
+major interest nowadays. Place recognition is a key module
+of a SLAM system to close loops (i.e. detect when the sensor
+returns to a mapped area and correct the accumulated error
+in exploration) and to relocalize the camera after a tracking
+failure, due to occlusion or aggressive motion, or at system
+re-initializa

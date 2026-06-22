@@ -1,0 +1,34 @@
+# Segment from 12_Brachmann_LessMore.pdf
+# Source: literature/pdf/12_Brachmann_LessMore.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+ABSTRACT
+Test Frames with 3D Model Fitted (Our Results)
+
+                                             Popular research areas like autonomous driving and
+                                         augmented reality have renewed the interest in image-based
+                                         camera localization. In this work, we address the task
+                                         of predicting the 6D camera pose from a single RGB im-
+                                                                                                            Estimated Camera Positions (Our Results)
+                                         age in a given 3D environment. With the advent of neu-
+                                         ral networks, previous works have either learned the en-
+                                         tire camera localization process, or multiple components
+                                         of a camera localization pipeline. Our key contribution
+                                         is to demonstrate and explain that learning a single com-
+                                         ponent of this pipeline is sufficient. This component is a
+                                         fully convolutional neural network for densely regressing
+                                         so-called scene coordinates, defining the correspondence
+                                                                                                            Estimated Camera Positions (Competitors)
+                                         between the input image and the 3D scene space. The
+                                         neural network is prepended to a new end-to-end trainable
+                                         pipeline. Our system is efficient, highly accurate, robust in
+                                         training, and exhibits outstanding generalization capabili-
+                                         ties. It exceeds state-of-the-art consistently on indoor and
+                                         outdoor datasets. Interestingly, our approach surpasses ex-
+                                         isting techniques even without utilizing a 3D model of the
+                                         scene during training, since the network is able to discover
+                                         3D scene geometry automatically, solely from single-view
+                                         constraints.                                                    Figure 1. One-Shot RGB Camera Localization. Top: We use
+                                                                                                         our pose estimates to fit a 3D scene model to test images. Middle:
+                                                                                                         We visualize a camera trajectory by plotting camera positions as
+                                                                                                         dots and connecting consecutive frames. We show our estimates

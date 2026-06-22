@@ -1,0 +1,58 @@
+# Segment from 06_Huang2010_Observability.pdf
+# Source: literature/pdf/06_Huang2010_Observability.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+    The International Journal of Robotics Research OnlineFirst, published on December 11, 2009 as doi:10.1177/0278364909353640
+
+
+
+
+Guoquan P. Huang
+Department of Computer Science and Engineering,
+                                                                           Observability-based
+University of Minnesota,
+Minneapolis, MN 55455,
+                                                                           Rules for Designing
+USA
+ghuang@cs.umn.edu
+                                                                           Consistent EKF SLAM
+Anastasios I. Mourikis                                                     Estimators
+Department of Electrical Engineering,
+University of California, Riverside,
+Riverside, CA 92521,
+USA
+mourikis@ee.ucr.edu
+
+Stergios I. Roumeliotis
+Department of Computer Science and Engineering,
+University of Minnesota,
+Minneapolis, MN 55455,
+USA
+stergios@cs.umn.edu
+
+
+
+
+Abstract                                                                   observability constraints. In the second, the filter Jacobians are cal-
+                                                                           culated using the first-ever available estimates for all state variables.
+In this work, we study the inconsistency problem of extended Kalman        This latter approach is termed first-estimates Jacobian (FEJ)-EKF.
+filter (EKF)-based simultaneous localization and mapping (SLAM)            The proposed algorithms have been tested both in simulation and ex-
+from the perspective of observability. We analytically prove that when     perimentally, and are shown to significantly outperform the standard
+the Jacobians of the process and measurement models are evaluated          EKF both in terms of accuracy and consistency.
+at the latest state estimates during every time step, the linearized
+                                                                           KEY WORDS—simultaneous localization and mapping, non-
+error-state system employed in the EKF has an observable subspace
+                                                                           linear estimation, extended Kalman filter, linearization errors,
+of dimension higher than that of the actual, non-linear, SLAM system.
+                                                                           estimator inconsistency, observability
+As a result, the covariance estimates of the EKF undergo reduction in
+directions of the state space where no information is available, which
+is a primary cause of the inconsistency. Based on these theoretical re-    1. Introduction
+sults, we propose a general framework for improving the consistency
+of EKF-based SLAM. In this framework, the EKF linearization points         Simultaneous localization and mapping (SLAM) is the process
+are selected in a way that ensures that the resulting linearized system    of building a map of an environment and concurrently gen-
+model has an observable subspace of appropriate dimension. We de-          erating an estimate of the robot pose (position and orienta-
+scribe two algorithms that are instances of this paradigm. In the first,   tion) from the sensor readings. For autonomous vehicles ex-
+termed observability constrained (OC)-EKF, the linearization points        ploring unknown environments, the ability to perform SLAM
+are selected so as to minimize their expected errors (i.e. the differ-     is essential. Since Smith and Cheeseman (1987) first intro-
+ence between the linearization point and the true st

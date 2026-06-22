@@ -1,0 +1,38 @@
+# Segment from 09_Sun2017_substitute_VO_PartII.pdf
+# Source: literature/pdf/09_Sun2017_substitute_VO_PartII.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+                                                                                                                © DIGITAL VISION
+                                                        Visual Odometry
+                            Part II: Matching, Robustness, Optimization, and Applications
+
+                                                         By Friedrich Fraundorfer and Davide Scaramuzza
+
+
+
+
+   V
+             isual odometry (VO) is the process of estimating                        The advantage of VO with respect to wheel odometry is
+            the egomotion of an agent (e.g., vehicle, human,                     that VO is not affected by wheel slip in uneven terrain or
+          and robot) using the input of a single or multiple                     other adverse conditions. It has been demonstrated that
+         cameras attached to it. Application domains include                     compared to wheel odometry, VO provides more accurate
+   robotics, wearable computing, augmented reality, and                          trajectory estimates, with the relative position error rang-
+   automotive. The term VO was popularized in 2004 by                            ing from 0.1 to 2%. This capability makes VO an interest-
+   Nister in his landmark article [1], but already appeared                      ing supplement to wheel odometry and, additionally, other
+   earlier, e.g., [88], [89]. The term was chosen for its similar-               navigation systems such as global positioning system
+   ity to wheel odometry, which incrementally estimates the                      (GPS), inertial measurement units (IMUs), and laser
+   motion of a vehicle by integrating the number of turns of                     odometry (similar to VO, laser odometry estimates the
+   its wheels over time. Likewise, VO operates by incremen-                      egomotion of a vehicle by scan matching of consecutive
+   tally estimating the pose of the vehicle through examina-                     laser scans). In GPS-denied environments, such as under-
+   tion of the changes that movement induces on the images                       water and aerial, VO has utmost importance.
+   of its onboard cameras. For the VO to work effectively,                           This two-part tutorial and survey provides a broad
+   there should be sufficient illumination in the environment                    introduction to VO and the research that has been under-
+   and a static scene with sufficient texture to allow apparent                  taken from 1980 to 2011. Although the first two decades
+   motion to be extracted. Furthermore, consecutive frames                       witnessed many offline implementations, only during the
+   should be captured by ensuring that they have sufficient                      third decade did real-time working systems flourish, which
+   scene overlap.                                                                has led VO to be used on another planet by two Mars-
+                                                                                 exploration rovers for the first time. Part I presented a
+   Digital Object Identifier 10.1109/MRA.2012.2182810                            historical review of the first 30 years of research in this
+   Date of publication: 16 February 2012                                         field, a discussion on camera modeling and calibration,
+
+78 • IEEE ROBOTICS & AUTOMATION MAGAZINE • JUNE 2012                               

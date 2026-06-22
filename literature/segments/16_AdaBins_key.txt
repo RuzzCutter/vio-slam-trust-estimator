@@ -1,0 +1,30 @@
+# Segment from 16_AdaBins.pdf
+# Source: literature/pdf/16_AdaBins.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+ABSTRACT
+Three-point and high-order clustering statistics of the high-redshift 21cm signal
+                                                                                 contain valuable information about the Epoch of Reionization. We present 3PCF-Fast,
+                                                                                 an optimised code for estimating the three-point correlation function of 3D pixelised
+                                                                                 data such as the outputs from numerical and semi-numerical simulations. After testing
+                                                                                 3PCF-Fast on data with known analytic three-point correlation function, we use ma-
+                                                                                 chine learning techniques to recover the mean bubble size and global ionisation fraction
+                                                                                 from correlations in the outputs of the publicly available 21cmFAST code. We assume
+                                                                                 that foregrounds have been perfectly removed and negligible instrumental noise. Us-
+                                                                                 ing ionisation fraction data, our best MLP model recovers the mean bubble size with
+                                                                                 a median prediction error of around 10%, or from the 21cm differential brightness
+                                                                                 temperature with median prediction error of around 14%. A further two MLP mod-
+                                                                                 els recover the global ionisation fraction with median prediction errors of around 4%
+                                                                                 (using ionisation fraction data) or around 16% (using brightness temperature). Our
+                                                                                 results indicate that clustering in both the ionisation fraction field and the brightness
+                                                                                 temperature field encode useful information about the progress of the Epoch of Reion-
+                                                                                 ization in a complementary way to other summary statistics. Using clustering would
+                                                                                 be particularly useful in regimes where high signal-to-noise ratio prevents direct mea-
+                                                                                 surement of bubble size statistics. We compare the quality of MLP models using the
+                                                                                 power spectrum, and find that using the three-point correlation function outperforms
+                                                                                 the power spectrum at predicting both global ionisation fraction and mean bubble
+                                                                                 size.
+                                                                                 Key words: cosmology - dark ages, reionization - statistical methods
+
+INTRODUCTION (excerpt)
+bac

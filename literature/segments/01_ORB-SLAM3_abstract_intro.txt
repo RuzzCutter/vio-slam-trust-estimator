@@ -1,0 +1,48 @@
+# Segment from 01_ORB-SLAM3.pdf
+# Source: literature/pdf/01_ORB-SLAM3.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+                                                               This paper has been accepted for publication in IEEE Transactions and Robotics.
+
+
+                                                                                       DOI: 10.1109/TRO.2021.3075644
+
+
+
+
+                                           ©2021 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any
+                                         current or future media, including reprinting/republishing this material for advertising or promotional purposes, creating new
+                                         collective works, for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other
+                                         works.
+arXiv:2007.11898v2 [cs.RO] 23 Apr 2021
+                                                                                                                                                  2
+
+
+
+
+    ORB-SLAM3: An Accurate Open-Source Library
+    for Visual, Visual-Inertial and Multi-Map SLAM
+        Carlos Campos∗ , Richard Elvira∗ , Juan J. Gómez Rodrı́guez, José M.M. Montiel and Juan D. Tardós
+
+
+
+
+   Abstract—This paper presents ORB-SLAM3, the first system                         on-board a mobile agent to build a map of the environment
+able to perform visual, visual-inertial and multi-map SLAM                          and compute in real-time the pose of the agent in that map.
+with monocular, stereo and RGB-D cameras, using pin-hole and                        In contrast, VO systems put their focus on computing the
+fisheye lens models.
+   The first main novelty is a feature-based tightly-integrated                     agent’s ego-motion, not on building a map. The big advantage
+visual-inertial SLAM system that fully relies on Maximum-a-                         of a SLAM map is that it allows matching and using in
+Posteriori (MAP) estimation, even during the IMU initialization                     BA previous observations performing three types of data
+phase. The result is a system that operates robustly in real time,                  association (extending the terminology used in [1]):
+in small and large, indoor and outdoor environments, and is two
+to ten times more accurate than previous approaches.                                  • Short-term data association, matching map elements
+   The second main novelty is a multiple map system that relies                         obtained during the last few seconds. This is the only
+on a new place recognition method with improved recall. Thanks                          data association type used by most VO systems, that
+to it, ORB-SLAM3 is able to survive to long periods of poor                             forget environment elements once they get out of view,
+visual information: when it gets lost, it starts a new map that
+will be seamlessly merged with previous maps when revisiting                            resulting in continuous estimation drift even when the
+mapped areas. Compared with visual odometry systems that                                system moves in the same area.
+only use information from the last few seconds, ORB-SLAM3                             • Mid-term data association, matching map elements that
+is the first system able to reuse in all the algorithm stages all                       are close to the camera whose accumulated drift is still
+previous information. This allow

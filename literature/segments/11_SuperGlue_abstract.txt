@@ -1,0 +1,45 @@
+# Segment from 11_SuperGlue.pdf
+# Source: literature/pdf/11_SuperGlue.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+ABSTRACT
+Supe
+arXiv:1911.11763v2 [cs.CV] 28 Mar 2020
+
+
+
+
+                                                                                                                                                       r Glue
+
+                                             This paper introduces SuperGlue, a neural network that
+                                         matches two sets of local features by jointly finding corre-
+
+
+
+
+                                                                                                                                                                                Back-End Optimizer
+                                         spondences and rejecting non-matchable points. Assign-
+                                         ments are estimated by solving a differentiable optimal
+                                         transport problem, whose costs are predicted by a graph
+                                         neural network. We introduce a flexible context aggregation
+                                         mechanism based on attention, enabling SuperGlue to rea-
+                                         son about the underlying 3D scene and feature assignments
+                                         jointly. Compared to traditional, hand-designed heuris-               Detector & Descriptor               SuperGlue
+                                                                                                                  Deep Front-End              Deep Middle-End Matcher
+                                         tics, our technique learns priors over geometric transforma-
+                                         tions and regularities of the 3D world through end-to-end
+                                         training from image pairs. SuperGlue outperforms other             Figure 1: Feature matching with SuperGlue. Our ap-
+                                         learned approaches and achieves state-of-the-art results on        proach establishes pointwise correspondences from off-the-
+                                                                                                         v8
+                                         the task of pose estimation in challenging real-world in-          shelf local features: it acts as a middle-end between hand-
+                                         door and outdoor environments. The proposed method per-            crafted or learned front-end and back-end. SuperGlue uses a
+                                         forms matching in real-time on a modern GPU and can                graph neural network and attention to solve an assignment
+                                         be readily integrated into modern SfM or SLAM systems.             optimization problem, and handles partial point visibility
+                                         The code and trained weights are publicly available at             and occlusion elegantly, producing a partial assignment.
+                                         github.com/magicleap/SuperGluePretrainedNetwork.
+
+                                                                                                                In this work, learning feature matching is viewed as
+
+INTRODUCTION (excerpt)
+finding the partial assignment between two sets of local
+                                                                                                             features. We revisit the classical graph-based strategy o

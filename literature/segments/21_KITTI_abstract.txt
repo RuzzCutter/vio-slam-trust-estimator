@@ -1,0 +1,29 @@
+# Segment from 21_KITTI.pdf
+# Source: literature/pdf/21_KITTI.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+ABSTRACT
+Today, visual recognition systems are still rarely em-
+ployed in robotics applications. Perhaps one of the main
+reasons for this is the lack of demanding benchmarks that
+mimic such scenarios. In this paper, we take advantage
+of our autonomous driving platform to develop novel chal-
+lenging benchmarks for the tasks of stereo, optical flow, vi-
+sual odometry / SLAM and 3D object detection. Our record-
+ing platform is equipped with four high resolution video
+cameras, a Velodyne laser scanner and a state-of-the-art
+localization system. Our benchmarks comprise 389 stereo
+                                                                     Figure 1. Recording platform with sensors (top-left), trajectory
+and optical flow image pairs, stereo visual odometry se-             from our visual odometry benchmark (top-center), disparity and
+quences of 39.2 km length, and more than 200k 3D ob-                 optical flow map (top-right) and 3D object labels (bottom).
+ject annotations captured in cluttered scenarios (up to 15
+cars and 30 pedestrians are visible per image). Results              [17], Middlebury for stereo [41] and optical flow [2] evalu-
+from state-of-the-art algorithms reveal that methods rank-           ation. However, most of these datasets are simplistic, e.g.,
+ing high on established datasets such as Middlebury per-             are taken in a controlled environment. A notable exception
+form below average when being moved outside the labora-              is the PASCAL VOC challenge [16] for detection and seg-
+tory to the real world. Our goal is to reduce this bias by           mentation.
+providing challenging benchmarks with novel difficulties to              In this paper, we take advantage of our autonomous driv-
+the computer vision community. Our benchmarks are avail-             ing platform to develop novel challenging benchmarks for
+able online at: www.cvlibs.net/datasets/kitti                        stereo, optical flow, visual odometry / SLAM and 3D object
+                                                                     detection. Our benchmarks are captured by driving around a
+                                                                     mid-size city, in rural areas and on highways. Our recording

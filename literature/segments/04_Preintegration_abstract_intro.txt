@@ -1,0 +1,49 @@
+# Segment from 04_Preintegration.pdf
+# Source: literature/pdf/04_Preintegration.pdf
+# Auto-extracted for citation; verify page numbers in original PDF.
+
+                                                                                                                          1
+
+
+
+
+                                         This paper has been accepted for publication in IEEE Transactions on Robotics.
+
+                                                              DOI: 10.1109/TRO.2016.2597321
+                                                   IEEE Explore: http://ieeexplore.ieee.org/document/7557075/
+
+                                                                    Please cite the paper as:
+
+                                              Christian Forster, Luca Carlone, Frank Dellaert, Davide Scaramuzza,
+                                             “On-Manifold Preintegration for Real-Time Visual-Inertial Odometry”,
+                                                            in IEEE Transactions on Robotics, 2016.
+arXiv:1512.02363v3 [cs.RO] 30 Oct 2016
+                                                                                                                                                 2
+
+
+
+
+               On-Manifold Preintegration for Real-Time
+                      Visual-Inertial Odometry
+                                Christian Forster, Luca Carlone, Frank Dellaert, Davide Scaramuzza
+
+
+
+   Abstract—Current approaches for visual-inertial odometry                      of monocular vision and gravity observable [1] and provides
+(VIO) are able to attain highly accurate state estimation via                    robust and accurate inter-frame motion estimates. Applications
+nonlinear optimization. However, real-time optimization quickly                  of VIO range from autonomous navigation in GPS-denied
+becomes infeasible as the trajectory grows over time; this problem
+is further emphasized by the fact that inertial measurements                     environments, to 3D reconstruction, and augmented reality.
+come at high rate, hence leading to fast growth of the number                       The existing literature on VIO imposes a trade-off between
+of variables in the optimization. In this paper, we address this                 accuracy and computational efficiency (a detailed review is
+issue by preintegrating inertial measurements between selected                   given in Section II). On the one hand, filtering approaches
+keyframes into single relative motion constraints. Our first                     enable fast inference, but their accuracy is deteriorated by the
+contribution is a preintegration theory that properly addresses
+the manifold structure of the rotation group. We formally discuss                accumulation of linearization errors. On the other hand, full
+the generative measurement model as well as the nature of the                    smoothing approaches, based on nonlinear optimization, are
+rotation noise and derive the expression for the maximum a                       accurate, but computationally demanding. Fixed-lag smooth-
+posteriori state estimator. Our theoretical development enables                  ing offers a compromise between accuracy for efficiency;
+the computation of all necessary Jacobians for the optimization                  however, it is not clear how to set the length of the estimation
+and a-posteriori bias correction in analytic form. The second
+contribution is to show that the preintegrated IMU model can be                  window so to guarantee a given level of performance.
+seamlessly integrated into a visual-inertial pipeline under the 
