@@ -1,5 +1,5 @@
-# Segment from 14_Eigen_Depth.pdf
-# Source: literature/pdf/14_Eigen_Depth.pdf
+# Segment from 20_Eigen_Depth.pdf
+# Source: literature/pdf/20_Eigen_Depth.pdf
 # Auto-extracted for citation; verify page numbers in original PDF.
 
 ABSTRACT

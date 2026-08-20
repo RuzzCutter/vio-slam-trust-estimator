@@ -1,5 +1,5 @@
-# Segment from 15_DPT.pdf
-# Source: literature/pdf/15_DPT.pdf
+# Segment from 21_DPT.pdf
+# Source: literature/pdf/21_DPT.pdf
 # Auto-extracted for citation; verify page numbers in original PDF.
 
 ABSTRACT

@@ -1,70 +1,59 @@
-# Каталог литературы для заготовки статьи
+# Каталог литературы
 
-Источники соответствуют `Список_литературы.txt` (23 позиции).
+Префикс файла = номер ссылки [1]–[27] в `Статья_v6.txt` / `Список_литературы.txt`.  
+
+Неиспользуемые материалы старого 23-пунктового списка: `literature/archive/`.
 
 ## Структура
 
 | Каталог | Содержимое |
 |---------|------------|
-| `literature/pdf/` | Полные тексты (PDF), где удалось скачать |
-| `literature/segments/` | Выдержки для цитирования (abstract, ключевые абзацы) |
-| `literature/download_literature.sh` | Скрипт повторной загрузки PDF |
-
----
+| `literature/pdf/` | PDF, имя `NN_*.pdf` |
+| `literature/segments/` | Выдержки, имя `NN_*.txt` |
+| `literature/archive/` | Файлы, не входящие в список v6 |
+| `literature/download_literature.sh` | Повторная загрузка по номерам статьи |
 
 ## Сводная таблица
 
 | № | Источник | PDF | Сегмент | Примечание |
 |---|----------|-----|---------|------------|
-| 1 | ORB-SLAM3 (Campos et al., TRO 2021) | `pdf/01_ORB-SLAM3.pdf` | `segments/01_ORB-SLAM3_abstract_intro.txt` | arXiv preprint |
-| 2 | VINS-Mono (Qin et al., TRO 2018) | `pdf/02_VINS-Mono.pdf` | `segments/02_VINS-Mono_abstract_intro.txt` | arXiv |
-| 3 | OKVIS (Leutenegger et al., IJRR 2015) | `pdf/03_OKVIS.pdf` | `segments/03_OKVIS_abstract_intro.txt` | авторский PDF |
-| 4 | Preintegration (Forster et al., TRO 2017) | `pdf/04_Preintegration.pdf` | `segments/04_Preintegration_abstract_intro.txt` | arXiv |
-| 5 | ORB-SLAM2 (Mur-Artal, TRO 2017) | `pdf/05_ORB-SLAM2.pdf` | `segments/05_ORB-SLAM2_abstract_intro.txt` | arXiv |
-| 6 | Huang et al., observability (TRO/IJRR 2010) | `pdf/06_Huang2010_Observability.pdf` | `segments/06_Huang_observability_key.txt` | MIT mirror |
-| 7 | Li & Mourikis, MSCKF 2.0 (IJRR 2013) | `pdf/07_Li2013_MSCKF.pdf` | `segments/07_Li_MSCKF_consistency.txt` | Semantic Scholar (слайды/конспект; для полного текста — SAGE) |
-| 8 | OpenVINS (Geneva et al., ICRA 2020) | `pdf/08_OpenVINS.pdf` | `segments/08_OpenVINS_key.txt` | авторский PDF |
-| 9 | Sun et al., RSS 2017 | `pdf/09_Sun2017_substitute_VO_PartII.pdf` | `segments/09_outlier_RANSAC_key.txt` | **см. `09_Sun2017_NOTE.txt`** — оригинал не найден, заменитель |
-| 10 | SuperPoint (DeTone et al., CVPRW 2018) | `pdf/10_SuperPoint.pdf` | `segments/10_SuperPoint_abstract.txt` | arXiv |
-| 11 | SuperGlue (Sarlin et al., CVPR 2020) | `pdf/11_SuperGlue.pdf` | `segments/11_SuperGlue_abstract.txt` | arXiv |
-| 12 | Brachmann & Rother, Less is More (CVPR 2018) | `pdf/12_Brachmann_LessMore.pdf` | `segments/12_Brachmann_key.txt` | arXiv; также `12b_Brachmann_DSAC2017.pdf` |
-| 13 | DROID-SLAM (Teed & Deng, NeurIPS 2021) | `pdf/13_DROID-SLAM.pdf` | `segments/13_DROID-SLAM_abstract.txt` | arXiv |
-| 14 | Eigen et al., depth (NIPS 2014) | `pdf/14_Eigen_Depth.pdf` | `segments/14_Eigen_depth_key.txt` | arXiv |
-| 15 | DPT (Ranftl et al., ICCV 2021) | `pdf/15_DPT.pdf` | `segments/15_DPT_key.txt` | arXiv |
-| 16 | AdaBins (Bhat et al., CVPR 2021) | `pdf/16_AdaBins.pdf` | `segments/16_AdaBins_key.txt` | arXiv |
-| 17 | Song et al., Sensors 2024 | — | `segments/17_Song2024_abstract_intro.txt` | MDPI open access, PDF 403 при wget |
-| 18 | Yang et al., Measurement 2026 | — | `segments/18_Yang2026_bibliography.txt` | paywall (2026) |
-| 19 | Kim et al., RA-L 2021 | — | `segments/19_Kim2021_bibliography.txt` | IEEE paywall |
-| 20 | Zaffar et al., VPR-Bench (IJCV 2021)* | `pdf/20_Zaffar_VPR-Bench.pdf` | `segments/20_Zaffar_abstract.txt` | Springer OA; в списке указан IEEE TITS — уточнить запись |
-| 21 | KITTI (Geiger et al., CVPR 2012) | `pdf/21_KITTI.pdf` | `segments/21_KITTI_abstract.txt` | cvlibs.net |
-| 22 | EuRoC (Burri et al., IJRR 2016) | — | `segments/22_EuRoC_abstract.txt` | SAGE; abstract + dataset page |
-| 23 | TUM-VI (Schubert et al., IJRR 2021) | `pdf/23_TUM-VI.pdf` | `segments/23_TUM-VI_abstract.txt` | arXiv |
+| 1 | ORB-SLAM3, TRO 2021 | `pdf/01_ORB-SLAM3.pdf` | `segments/01_ORB-SLAM3_abstract_intro.txt` | |
+| 2 | VINS-Mono, TRO 2018 | `pdf/02_VINS-Mono.pdf` | `segments/02_VINS-Mono_abstract_intro.txt` | |
+| 3 | ORB-SLAM2, TRO 2017 | `pdf/03_ORB-SLAM2.pdf` | `segments/03_ORB-SLAM2_abstract_intro.txt` | |
+| 4 | OKVIS, IJRR 2015 | `pdf/04_OKVIS.pdf` | `segments/04_OKVIS_abstract_intro.txt` | |
+| 5 | Preintegration, TRO 2017 | `pdf/05_Preintegration.pdf` | `segments/05_Preintegration_abstract_intro.txt` | |
+| 6 | OpenVINS, ICRA 2020 | `pdf/06_OpenVINS.pdf` | `segments/06_OpenVINS_key.txt` | + Lee W. |
+| 7 | Kim et al., IROS 2015 | — | `segments/07_Kim2015_bibliography.txt` | IEEE paywall |
+| 8 | VPR-Bench, IJCV 2021 | `pdf/08_Zaffar_VPR-Bench.pdf` | `segments/08_Zaffar_abstract.txt` | |
+| 9 | EuRoC, IJRR 2016 | — | `segments/09_EuRoC_abstract.txt` | SAGE |
+| 10 | RANSAC, CACM 1981 | — | `segments/10_RANSAC_key.txt` | ACM |
+| 11 | KITTI, CVPR 2012 | `pdf/11_KITTI.pdf` | `segments/11_KITTI_abstract.txt` | |
+| 12 | TUM-VI, IJRR 2021 | `pdf/12_TUM-VI.pdf` | `segments/12_TUM-VI_abstract.txt` | |
+| 13 | Бобков, Май, 2018 | `pdf/13_Bobkov2018.pdf` | `segments/13_Bobkov2018_key.txt` | |
+| 14 | Голубков и др., 2026 | — | `segments/14_Golubkov2026_bibliography.txt` | журнал закрыт |
+| 15 | Li & Mourikis, IJRR 2013 | `pdf/15_Li2013_MSCKF.pdf` | `segments/15_Li_MSCKF_consistency.txt` | PDF — слайды |
+| 16 | Махмуд, Колюбин, 2026 | — | `segments/16_Mahmoud2026_bibliography.txt` | журнал закрыт |
+| 17 | Ян Ган и др., 2023 | `pdf/17_YangGan_Gyroscopy2023.pdf` | `segments/17_YangGan_key.txt` | Дун Хоу-Го |
+| 18 | SuperPoint, CVPRW 2018 | `pdf/18_SuperPoint.pdf` | `segments/18_SuperPoint_abstract.txt` | P. 224–236 |
+| 19 | SuperGlue, CVPR 2020 | `pdf/19_SuperGlue.pdf` | `segments/19_SuperGlue_abstract.txt` | |
+| 20 | Eigen et al., NIPS 2014 | `pdf/20_Eigen_Depth.pdf` | `segments/20_Eigen_depth_key.txt` | |
+| 21 | DPT, ICCV 2021 | `pdf/21_DPT.pdf` | `segments/21_DPT_key.txt` | |
+| 22 | AdaBins, CVPR 2021 | `pdf/22_AdaBins.pdf` | `segments/22_AdaBins_key.txt` | |
+| 23 | DROID-SLAM, NeurIPS 2021 | `pdf/23_DROID-SLAM.pdf` | `segments/23_DROID-SLAM_abstract.txt` | P. 16558–16569 |
+| 24 | Song et al., Sensors 2024 | — | `segments/24_Song2024_abstract_intro.txt` | MDPI 403 |
+| 25 | Yang et al., Measurement 258 | — | `segments/25_Yang2026_bibliography.txt` | Elsevier |
+| 26 | Huang et al., IJRR 2010 | `pdf/26_Huang2010_Observability.pdf` | `segments/26_Huang_observability_key.txt` | IJRR 29(5):502–528 |
+| 27 | Сойфер, Гошин, 2025 | `pdf/27_Soifer2025.pdf` | `segments/27_Soifer2025_key.txt` | |
 
-\* Позиция 20 в `Список_литературы.txt` указывает IEEE TITS 2021; найденная открытая версия — IJCV 2021 (тот же авторский состав, расширенная статья VPR-Bench).
+Прочерки у PDF: [7], [9], [10], [14], [16], [24], [25] — не дыры в нумерации, а отсутствующий полный текст.
 
----
+## Архив (не в списке статьи)
 
-## Статистика загрузки
-
-- **PDF скачано:** 19 файлов (~89 MB)
-- **Только сегменты/метаданные:** №17, 18, 19, 22
-- **Требует проверки библиографии:** №9, №20
-
----
-
-## Ключевые источники для нашей статьи (адаптивное доверие / OpenVINS)
-
-| Тема | Источники |
-|------|-----------|
-| Базовая платформа | #8 OpenVINS, #7 MSCKF 2.0, #6 observability |
-| Сравнение VIO | #2 VINS-Mono, #3 OKVIS, #1 ORB-SLAM3 |
-| IMU | #4 preintegration |
-| Outliers / robustness | #9 (заменитель), #13 DROID-SLAM |
-| Uncertainty / depth | #17 Song, #14–16 depth networks |
-| Датасеты | #21 KITTI, #22 EuRoC, #23 TUM-VI |
-| Деградация / погода | #19 Kim, #20 Zaffar (motion blur) |
-
----
+| Файл | Почему в архиве |
+|------|-----------------|
+| `archive/pdf/09_Sun2017_substitute_VO_PartII.pdf` | Sun RSS 2017 не существует; заменён на [10] RANSAC |
+| `archive/pdf/12_Brachmann_LessMore.pdf`, `12b_Brachmann_DSAC2017.pdf` | в тексте v6 нет ссылки |
+| `archive/segments/19_Kim2021_bibliography.txt` | Kim RA-L 2021 заменён на [7] IROS 2015 |
 
 ## Повторная загрузка
 
@@ -72,19 +61,10 @@
 bash literature/download_literature.sh
 ```
 
-Извлечение сегментов из PDF (после обновления pdf/):
+## Сверка 2026-08-20
 
-```bash
-python3 - <<'PY'
-# см. историю сессии: скрипт pdftotext + regex Abstract/Introduction
-PY
-```
+Все PDF в `pdf/` — те же статьи, что в списке (нет подмен). Сегменты 01–27 полные.
 
----
+В `Статья_v6.txt` убраны ложные привязки: §4.2 больше не цитирует [10, 24, 7] как описание skip MSCKF; §6.4 больше не цитирует [23, 25, 8] как подтверждение сдвига c(t). Эти номера остаются в обзоре, где они по теме.
 
-## Действия перед финальной статьёй
-
-1. Получить PDF #17 (MDPI), #19 (IEEE), #22 (SAGE) через институциональный доступ.
-2. Уточнить или исправить ссылку #9 (Sun RSS 2017).
-3. Сверить запись #20 (IJCV vs IEEE TITS).
-4. Для #7 заменить PDF на полную версию IJRR при наличии доступа.
+На этап C: [1, 3] при f3 и [26, 15] при «покрытие/репроекция» — родственные, не буквальные источники формулы.

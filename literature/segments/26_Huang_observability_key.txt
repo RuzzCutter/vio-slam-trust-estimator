@@ -1,5 +1,5 @@
-# Segment from 06_Huang2010_Observability.pdf
-# Source: literature/pdf/06_Huang2010_Observability.pdf
+# Segment from 26_Huang2010_Observability.pdf
+# Source: literature/pdf/26_Huang2010_Observability.pdf
 # Auto-extracted for citation; verify page numbers in original PDF.
 
     The International Journal of Robotics Research OnlineFirst, published on December 11, 2009 as doi:10.1177/0278364909353640

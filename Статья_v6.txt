@@ -3,7 +3,7 @@
 Авторы: Танцюра Г.А., Хомоненко А.Д.
 
 Версия 6. Основа — правка руководителя (v5).
-Библиография: устранён дубль EuRoC; выровнены русский и английский списки; заменены неподтверждаемые записи; уточнены формулировки цитирования [13], [14], [16], [27].
+Библиография: список выровнен с literature/ и Список_литературы.txt (27 позиций); исправлены журнал Huang [26], автор Lee в OpenVINS [6], страницы SuperPoint/DROID, PDF DROID/AdaBins; уточнены [17], [25].
 Экспериментальные вставки v5, не воспроизводимые текущим ПО (5 seed, p-value, ORB-SLAM3, V1_03, r = −0,72, переписанный ablation), исключены; таблицы 1–2 возвращены к зарегистрированным прогонам.
 
 
@@ -143,7 +143,7 @@
 
 4.2. Исключение деградировавших измерений
 
-При c(t) < c_skip (c_skip = 0,15) визуальное обновление пропускается, выполняется только инерциальный прогноз [10, 24, 7].
+При c(t) < c_skip (c_skip = 0,15) визуальное обновление пропускается, выполняется только инерциальный прогноз. В отличие от поштучной отбраковки соответствий [10], пропускается весь визуальный шаг, а не отдельные точки.
 
 
 4.3. Формирование карты достоверности
@@ -252,7 +252,7 @@ MH_05_difficult      D1 σ=5      1,218   0,770    0,832    0,518    1,006    �
 
 6.4. Анализ карты достоверности
 
-По результатам adaptive-прогонов построены карты C(x, y) для последовательностей MH_04_difficult, в том числе с деградацией D1 (σ = 5). Карта отображает пространственную концентрацию низких значений c(t) на участках с визуально сложными условиями; профиль c(t) вдоль пути согласуется с моментами всплеска ошибки в табл. 1. Количественная связь карты с локальной ATE в настоящей работе носит качественный характер: C(p) служит интерпретируемым слоем для диагностики и заделом для планирования (разд. 4.4). Сопоставление карт для clean и degrade подтверждает, что деградация D1 смещает распределение c(t) в сторону меньших значений, не нарушая непрерывности оценки на большей части траектории [23, 25, 8].
+По результатам adaptive-прогонов построены карты C(x, y) для последовательностей MH_04_difficult, в том числе с деградацией D1 (σ = 5). Карта отображает пространственную концентрацию низких значений c(t) на участках с визуально сложными условиями; профиль c(t) вдоль пути согласуется с моментами всплеска ошибки в табл. 1. Количественная связь карты с локальной ATE в настоящей работе носит качественный характер: C(p) служит интерпретируемым слоем для диагностики и заделом для планирования (разд. 4.4). Сопоставление карт для clean и degrade подтверждает, что деградация D1 смещает распределение c(t) в сторону меньших значений, не нарушая непрерывности оценки на большей части траектории.
 
 
 7. Заключение
@@ -297,7 +297,7 @@ MH_05_difficult      D1 σ=5      1,218   0,770    0,832    0,518    1,006    �
 
 5. Forster C., Carlone L., Dellaert F., Scaramuzza D. On-Manifold Preintegration for Real-Time Visual–Inertial Odometry // IEEE Transactions on Robotics. 2017. Vol. 33, № 1. P. 1–21.
 
-6. Geneva P., Eckenhoff K., Yang Y., Huang G. OpenVINS: A Research Platform for Visual-Inertial Estimation // Proc. IEEE International Conference on Robotics and Automation. 2020. P. 4666–4672.
+6. Geneva P., Eckenhoff K., Lee W., Yang Y., Huang G. OpenVINS: A Research Platform for Visual-Inertial Estimation // Proc. IEEE International Conference on Robotics and Automation. 2020. P. 4666–4672.
 
 7. Kim P., Lim H., Kim H.J. Robust Visual Odometry to Irregular Illumination Changes with RGB-D Camera // Proc. IEEE/RSJ International Conference on Intelligent Robots and Systems. 2015. P. 3688–3694.
 
@@ -319,9 +319,9 @@ MH_05_difficult      D1 σ=5      1,218   0,770    0,832    0,518    1,006    �
 
 16. Махмуд Ж., Колюбин С.А. Визуально-инерциально-колесная одометрия с адаптивным переключением на основе оценок движения робототехнических платформ разного типа // Известия высших учебных заведений. Приборостроение. 2026. Т. 69, № 2. С. 191–195. DOI: 10.17586/0021-3454-2026-69-2-191-195.
 
-17. Ян Ган, Мэн Вэй-Да, Хоу Г.Д., Фэн Нин-Нин. Использование ключевых точек и линий изображения в задаче визуально-инерциальной одометрии в реальном времени // Гироскопия и навигация. 2023. Т. 31, № 4(123). С. 96–117.
+17. Ян Ган, Мэн Вэй-Да, Дун Хоу-Го, Фэн Нин-Нин. Использование ключевых точек и линий изображения в задаче визуально-инерциальной одометрии в реальном времени // Гироскопия и навигация. 2023. Т. 31, № 4(123). С. 96–117.
 
-18. DeTone D., Malisiewicz T., Rabinovich A. SuperPoint: Self-Supervised Interest Point Detection and Description // Proc. CVPR Workshops. 2018.
+18. DeTone D., Malisiewicz T., Rabinovich A. SuperPoint: Self-Supervised Interest Point Detection and Description // Proc. IEEE Conference on Computer Vision and Pattern Recognition Workshops. 2018. P. 224–236.
 
 19. Sarlin P.E., DeTone D., Malisiewicz T., Rabinovich A. SuperGlue: Learning Feature Matching with Graph Neural Networks // Proc. IEEE Conference on Computer Vision and Pattern Recognition. 2020. P. 4938–4947.
 
@@ -331,13 +331,13 @@ MH_05_difficult      D1 σ=5      1,218   0,770    0,832    0,518    1,006    �
 
 22. Bhat S.F., Alhashim I., Wonka P. AdaBins: Depth Estimation Using Adaptive Bins // Proc. IEEE Conference on Computer Vision and Pattern Recognition. 2021. P. 4009–4018.
 
-23. Teed Z., Deng J. DROID-SLAM: Deep Visual SLAM for Monocular, Stereo and RGB-D Cameras // Advances in Neural Information Processing Systems. 2021.
+23. Teed Z., Deng J. DROID-SLAM: Deep Visual SLAM for Monocular, Stereo and RGB-D Cameras // Advances in Neural Information Processing Systems. 2021. Vol. 34. P. 16558–16569.
 
-24. Song J., Jo H., Jin Y., Lee S.J. Uncertainty-Aware Depth Network for Visual-Inertial Odometry of Mobile Robots // Sensors. 2024. Vol. 24, № 20. Art. 6665.
+24. Song J., Jo H., Jin Y., Lee S.J. Uncertainty-Aware Depth Network for Visual-Inertial Odometry of Mobile Robots // Sensors. 2024. Vol. 24, № 20. Art. 6665. DOI: 10.3390/s24206665.
 
-25. Yang J., Yin Y., Jing Q. Semantic Stereo Visual Estimator Based on VINS-Fusion for Restricted Aquatic Environments // Measurement. 2026. Vol. 258. Art. 119054.
+25. Yang J., Yin Y., Jing Q. SVE: A Semantic Stereo Visual Estimator Based on VINS-Fusion for Restricted Aquatic Environments // Measurement. 2026. Vol. 258. Art. 119054. DOI: 10.1016/j.measurement.2025.119054.
 
-26. Huang G., Mourikis A.I., Roumeliotis S.I. Observability-Based Rules for Designing Consistent EKF SLAM Estimators // IEEE Transactions on Robotics. 2010. Vol. 26, № 2. P. 201–212.
+26. Huang G., Mourikis A.I., Roumeliotis S.I. Observability-Based Rules for Designing Consistent EKF SLAM Estimators // International Journal of Robotics Research. 2010. Vol. 29, № 5. P. 502–528.
 
 27. Сойфер В.А., Гошин Е.В. Визуальная одометрия с коррекцией траектории на основе применения фильтра Калмана // Информатика и автоматизация. 2025. Т. 24, № 6. С. 1568–1586. DOI: 10.15622/ia.24.6.2.
 
@@ -370,7 +370,7 @@ References
 
 5. Forster C., Carlone L., Dellaert F., Scaramuzza D. On-Manifold Preintegration for Real-Time Visual–Inertial Odometry // IEEE Transactions on Robotics. 2017. Vol. 33, № 1. P. 1–21.
 
-6. Geneva P., Eckenhoff K., Yang Y., Huang G. OpenVINS: A Research Platform for Visual-Inertial Estimation // Proc. IEEE International Conference on Robotics and Automation. 2020. P. 4666–4672.
+6. Geneva P., Eckenhoff K., Lee W., Yang Y., Huang G. OpenVINS: A Research Platform for Visual-Inertial Estimation // Proc. IEEE International Conference on Robotics and Automation. 2020. P. 4666–4672.
 
 7. Kim P., Lim H., Kim H.J. Robust Visual Odometry to Irregular Illumination Changes with RGB-D Camera // Proc. IEEE/RSJ International Conference on Intelligent Robots and Systems. 2015. P. 3688–3694.
 
@@ -394,7 +394,7 @@ References
 
 17. Yang G., Meng W.D., Hou G.D., Feng N.N. Ispol'zovanie klyuchevykh tochek i liniy izobrazheniya v zadache vizual'no-inertsial'noy odometrii v real'nom vremeni [Using keypoints and lines in real-time visual-inertial odometry]. Giroskopiya i navigatsiya [Gyroscopy and Navigation]. 2023, Vol. 31, No. 4(123), pp. 96–117. (In Russian)
 
-18. DeTone D., Malisiewicz T., Rabinovich A. SuperPoint: Self-Supervised Interest Point Detection and Description // Proc. CVPR Workshops. 2018.
+18. DeTone D., Malisiewicz T., Rabinovich A. SuperPoint: Self-Supervised Interest Point Detection and Description // Proc. IEEE Conference on Computer Vision and Pattern Recognition Workshops. 2018. P. 224–236.
 
 19. Sarlin P.E., DeTone D., Malisiewicz T., Rabinovich A. SuperGlue: Learning Feature Matching with Graph Neural Networks // Proc. IEEE Conference on Computer Vision and Pattern Recognition. 2020. P. 4938–4947.
 
@@ -404,12 +404,12 @@ References
 
 22. Bhat S.F., Alhashim I., Wonka P. AdaBins: Depth Estimation Using Adaptive Bins // Proc. IEEE Conference on Computer Vision and Pattern Recognition. 2021. P. 4009–4018.
 
-23. Teed Z., Deng J. DROID-SLAM: Deep Visual SLAM for Monocular, Stereo and RGB-D Cameras // Advances in Neural Information Processing Systems. 2021.
+23. Teed Z., Deng J. DROID-SLAM: Deep Visual SLAM for Monocular, Stereo and RGB-D Cameras // Advances in Neural Information Processing Systems. 2021. Vol. 34. P. 16558–16569.
 
-24. Song J., Jo H., Jin Y., Lee S.J. Uncertainty-Aware Depth Network for Visual-Inertial Odometry of Mobile Robots // Sensors. 2024. Vol. 24, № 20. Art. 6665.
+24. Song J., Jo H., Jin Y., Lee S.J. Uncertainty-Aware Depth Network for Visual-Inertial Odometry of Mobile Robots // Sensors. 2024. Vol. 24, № 20. Art. 6665. DOI: 10.3390/s24206665.
 
-25. Yang J., Yin Y., Jing Q. Semantic Stereo Visual Estimator Based on VINS-Fusion for Restricted Aquatic Environments // Measurement. 2026. Vol. 258. Art. 119054.
+25. Yang J., Yin Y., Jing Q. SVE: A Semantic Stereo Visual Estimator Based on VINS-Fusion for Restricted Aquatic Environments // Measurement. 2026. Vol. 258. Art. 119054. DOI: 10.1016/j.measurement.2025.119054.
 
-26. Huang G., Mourikis A.I., Roumeliotis S.I. Observability-Based Rules for Designing Consistent EKF SLAM Estimators // IEEE Transactions on Robotics. 2010. Vol. 26, № 2. P. 201–212.
+26. Huang G., Mourikis A.I., Roumeliotis S.I. Observability-Based Rules for Designing Consistent EKF SLAM Estimators // International Journal of Robotics Research. 2010. Vol. 29, № 5. P. 502–528.
 
 27. Soifer V.A., Goshin E.V. Vizual'naya odometriya s korrektsiey traektorii na osnove primeneniya fil'tra Kalmana [Visual odometry with trajectory correction using the Kalman filter]. Informatika i avtomatizatsiya [Informatics and Automation]. 2025, Vol. 24, No. 6, pp. 1568–1586. DOI: 10.15622/ia.24.6.2. (In Russian)

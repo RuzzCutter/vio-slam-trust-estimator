@@ -1,5 +1,5 @@
-# Segment from 11_SuperGlue.pdf
-# Source: literature/pdf/11_SuperGlue.pdf
+# Segment from 19_SuperGlue.pdf
+# Source: literature/pdf/19_SuperGlue.pdf
 # Auto-extracted for citation; verify page numbers in original PDF.
 
 ABSTRACT

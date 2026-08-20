@@ -1,0 +1,15 @@
+# Yang J. (Jiyin), Yin Y. (Yong), Jing Q. (Qianfeng)
+# SVE: A semantic stereo visual estimator based on VINS-fusion for restricted aquatic environments
+# Measurement. 2026. Vol. 258. Art. 119054
+# DOI: 10.1016/j.measurement.2025.119054
+# Статья [25]
+# Полный текст: Elsevier paywall. Запись подтверждена цитированием в Measurement 2026 и DOI.
+
+## Библиографическая запись
+
+Yang J., Yin Y., Jing Q. SVE: A Semantic Stereo Visual Estimator Based on VINS-Fusion for Restricted Aquatic Environments // Measurement. 2026. Vol. 258. Art. 119054. DOI: 10.1016/j.measurement.2025.119054.
+
+## Примечание
+
+Год тома — 2026; DOI содержит 2025 (online). В списке оставляем год тома 2026, DOI обязателен.
+Тематика: семантическое стерео на VINS-Fusion в ограниченных водных средах — контекстная ссылка §1 / §4.4, не протокол нашего эксперимента.

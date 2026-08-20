@@ -1,0 +1,8 @@
+# Segment from 23_DROID-SLAM.pdf
+# Source: literature/pdf/23_DROID-SLAM.pdf (NeurIPS 2021; arXiv:2108.10869)
+# Перезалит 2026-08-19: предыдущий файл был чужой статьёй arXiv:2108.00669.
+
+ABSTRACT
+We introduce DROID-SLAM, a new deep learning based SLAM system. DROID-SLAM consists of recurrent iterative updates of camera pose and pixelwise depth through a Dense Bundle Adjustment layer. DROID-SLAM is accurate, achieving large improvements over prior work, and robust, suffering from substantially fewer catastrophic failures. Despite training on monocular video, it can leverage stereo or RGB-D video to achieve improved performance at test time. The URL to our open source code is https://github.com/princeton-vl/DROID-SLAM.
+
+Библиография (статья [23]): Teed Z., Deng J. DROID-SLAM: Deep Visual SLAM for Monocular, Stereo and RGB-D Cameras // Advances in Neural Information Processing Systems. 2021. Vol. 34. P. 16558–16569.
