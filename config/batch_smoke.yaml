@@ -1,0 +1,19 @@
+# Smoke этапа A: два независимых пуска короткого bag.
+# Не полная MH-серия. Запуск после того, как на диске будет место:
+#   python3 scripts/run_batch.py --plan config/batch_smoke.yaml --dry-run
+#   python3 scripts/run_batch.py --plan config/batch_smoke.yaml
+
+id: smoke_repeats
+description: "A5 smoke: MH_01 60 с × 2 повтора"
+
+eval: true
+duration: 60
+repeats: 2
+
+advanced:
+  retries: 3
+  trust_tau: 5.0
+  # start_offset не задаём — из config/datasets.yaml, одинаковый для обоих повторов
+
+runs:
+  - seq: MH_01_easy

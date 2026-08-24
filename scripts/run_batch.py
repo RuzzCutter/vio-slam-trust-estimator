@@ -59,6 +59,34 @@ def plan_kind(plan: dict[str, Any]) -> str:
     return "compare"
 
 
+def resolve_repeats(plan: dict[str, Any], cli_repeats: int | None) -> int:
+    if cli_repeats is not None:
+        return max(1, int(cli_repeats))
+    return max(1, int(plan.get("repeats") or 1))
+
+
+def expand_jobs(plan: dict[str, Any], *, repeats: int | None = None) -> list[dict[str, Any]]:
+    """One job per (run spec, repeat k). Does not touch start_offset or MSCKF seed."""
+    default_r = resolve_repeats(plan, repeats)
+    jobs: list[dict[str, Any]] = []
+    for run in plan.get("runs") or []:
+        r = max(1, int(run.get("repeats") or default_r))
+        for k in range(1, r + 1):
+            job = dict(run)
+            job["repeat"] = k
+            jobs.append(job)
+    return jobs
+
+
+def job_identity(row: dict[str, Any]) -> tuple[str, str, str, int]:
+    return (
+        str(row.get("seq") or ""),
+        str(row.get("degrade") or ""),
+        str(row.get("ablate") or ""),
+        int(row.get("repeat") or 1),
+    )
+
+
 def _parse_result_dirs(stdout: str) -> list[str]:
     dirs: list[str] = []
     for line in stdout.splitlines():
@@ -141,17 +169,26 @@ def run_adaptive_cell(
     return proc.returncode, (dirs[-1] if dirs else None), "\n".join(log_lines)
 
 
-def _manifest_index(manifest_path: Path) -> set[int]:
-    done: set[int] = set()
+def _manifest_completed(manifest_path: Path) -> tuple[set[tuple[str, str, str, int]], set[int]]:
+    """Return (identity keys, old-style indices) for rows with status=ok."""
+    keys: set[tuple[str, str, str, int]] = set()
+    indices: set[int] = set()
+    has_repeat = False
     if not manifest_path.is_file():
-        return done
+        return keys, indices
     for line in manifest_path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         row = json.loads(line)
-        if row.get("status") == "ok":
-            done.add(int(row.get("index", -1)))
-    return done
+        if row.get("status") != "ok":
+            continue
+        indices.add(int(row.get("index", -1)))
+        if "repeat" in row:
+            has_repeat = True
+            keys.add(job_identity(row))
+    if not has_repeat:
+        keys.clear()
+    return keys, indices
 
 
 def _append_manifest(path: Path, row: dict[str, Any]) -> None:
@@ -174,6 +211,7 @@ def main() -> int:
     parser.add_argument("--id", dest="batch_id", default="", help="Batch id (default: from plan + timestamp)")
     parser.add_argument("--resume", type=Path, default=None, help="Existing batch directory to continue")
     parser.add_argument("--from", dest="from_index", type=int, default=1, help="Start from run index (1-based)")
+    parser.add_argument("--repeats", type=int, default=None, help="Override plan repeats (independent launches)")
     parser.add_argument("--dry-run", action="store_true", help="Print plan only")
     parser.add_argument("--no-quiet", action="store_true", help="Verbose run_euroc output")
     args = parser.parse_args()
@@ -185,10 +223,10 @@ def main() -> int:
             raise SystemExit(f"No batch_plan.yaml in {batch_dir}")
         plan = load_plan(plan_path)
         manifest_path = batch_dir / "manifest.jsonl"
-        completed = _manifest_index(manifest_path)
+        completed_keys, completed_idx = _manifest_completed(manifest_path)
     else:
         plan = load_plan(args.plan.resolve())
-        completed = set()
+        completed_keys, completed_idx = set(), set()
         if args.dry_run:
             base_id = args.batch_id or plan.get("id", "batch")
             batch_dir = args.results_root / "batches" / f"{base_id}_<timestamp>"
@@ -200,48 +238,61 @@ def main() -> int:
             shutil.copy2(args.plan.resolve(), batch_dir / "batch_plan.yaml")
             manifest_path = batch_dir / "manifest.jsonl"
 
-    runs: list[dict[str, Any]] = plan.get("runs") or []
+    jobs: list[dict[str, Any]] = expand_jobs(plan, repeats=args.repeats)
     eval_ate = bool(plan.get("eval", True))
     duration = plan.get("duration")
     advanced = deepcopy(plan.get("advanced") or {})
     quiet = not args.no_quiet
     kind = plan_kind(plan)
+    n_jobs = len(jobs)
 
     if args.dry_run:
         print(f"Batch directory (preview): {batch_dir}")
-        print(f"Kind: {kind} | Runs: {len(runs)} | eval={eval_ate} | completed={len(completed)}")
+        print(
+            f"Kind: {kind} | Specs: {len(plan.get('runs') or [])} | "
+            f"Jobs: {n_jobs} | repeats={resolve_repeats(plan, args.repeats)} | "
+            f"eval={eval_ate} | completed={len(completed_keys) or len(completed_idx)}"
+        )
         print()
-        for i, run in enumerate(runs, start=1):
+        for i, run in enumerate(jobs, start=1):
             seq = run["seq"]
             degrade = run.get("degrade") or ""
             ablate = run.get("ablate") or ""
+            repeat = int(run.get("repeat") or 1)
             label = _run_label(degrade, ablate)
-            skip = "SKIP" if i in completed else "RUN"
-            print(f"  [{skip}] {i:02d}. {seq} | {label}")
+            ident = job_identity(run)
+            skip = "SKIP" if (ident in completed_keys or (not completed_keys and i in completed_idx)) else "RUN"
+            print(f"  [{skip}] {i:03d}. r{repeat} {seq} | {label}")
         return 0
 
     manifest_path = batch_dir / "manifest.jsonl"
 
     print(f"Batch directory: {batch_dir}")
-    print(f"Kind: {kind} | Runs: {len(runs)} | eval={eval_ate} | completed={len(completed)}")
+    print(
+        f"Kind: {kind} | Jobs: {n_jobs} | repeats={resolve_repeats(plan, args.repeats)} | "
+        f"eval={eval_ate} | completed={len(completed_keys) or len(completed_idx)}"
+    )
     print()
 
     summary_path = batch_dir / "batch_summary.txt"
     t0 = time.time()
     failures = 0
 
-    for i, run in enumerate(runs, start=1):
+    for i, run in enumerate(jobs, start=1):
         if i < args.from_index:
             continue
-        if i in completed:
-            print(f"[{i:02d}/{len(runs)}] skip (already done)")
+        ident = job_identity(run)
+        already = ident in completed_keys or (not completed_keys and i in completed_idx)
+        if already:
+            print(f"[{i:03d}/{n_jobs}] skip (already done)")
             continue
 
         seq = run["seq"]
         degrade = run.get("degrade") or ""
         ablate = run.get("ablate") or ""
+        repeat = int(run.get("repeat") or 1)
         label = _run_label(degrade, ablate)
-        print(f"[{i:02d}/{len(runs)}] {seq} | {label} ...", flush=True)
+        print(f"[{i:03d}/{n_jobs}] r{repeat} {seq} | {label} ...", flush=True)
 
         if kind == "ablation":
             rc, adaptive_dir, log_text = run_adaptive_cell(
@@ -265,12 +316,15 @@ def main() -> int:
             )
 
         ablate_tag = ablate.replace(":", "") or "full"
-        log_file = batch_dir / f"run_{i:02d}_{seq}_{degrade.replace(':', '') or 'clean'}_{ablate_tag}.log"
+        log_file = batch_dir / (
+            f"run_{i:03d}_r{repeat}_{seq}_{degrade.replace(':', '') or 'clean'}_{ablate_tag}.log"
+        )
         log_file.write_text(log_text, encoding="utf-8")
 
         ok = rc == 0 and (adaptive_dir if kind == "ablation" else (baseline_dir and adaptive_dir))
         row: dict[str, Any] = {
             "index": i,
+            "repeat": repeat,
             "kind": kind,
             "seq": seq,
             "degrade": degrade,
@@ -292,14 +346,32 @@ def main() -> int:
                 row["ape_adaptive_m"] = rec.ape_rmse_m
                 row["rpe_adaptive_m"] = rec.rpe_rmse_m
                 row["c_mean"] = rec.c_mean
+                row["n_poses"] = rec.poses
+                row["fail_adaptive"] = rec.protocol_failure
+                row["init_ok"] = rec.init_ok
                 print(f"    → APE {row['ape_adaptive_m']} m | c̄={row.get('c_mean')}")
             elif baseline_dir and adaptive_dir:
-                cmp = compare_from_dirs(baseline_dir, adaptive_dir, batch_id=batch_dir.name, run_index=i)
+                cmp = compare_from_dirs(
+                    baseline_dir,
+                    adaptive_dir,
+                    batch_id=batch_dir.name,
+                    run_index=i,
+                    repeat=repeat,
+                )
                 row["verdict"] = cmp.verdict()
                 row["delta_ape_pct"] = cmp.delta_ape_pct()
                 b, a = cmp.baseline, cmp.adaptive
                 row["ape_baseline_m"] = b.ape_rmse_m if b else None
                 row["ape_adaptive_m"] = a.ape_rmse_m if a else None
+                row["rpe_baseline_m"] = b.rpe_rmse_m if b else None
+                row["rpe_adaptive_m"] = a.rpe_rmse_m if a else None
+                row["c_mean"] = a.c_mean if a else None
+                row["n_poses_baseline"] = b.poses if b else 0
+                row["n_poses_adaptive"] = a.poses if a else 0
+                row["fail_baseline"] = b.protocol_failure if b else True
+                row["fail_adaptive"] = a.protocol_failure if a else True
+                row["init_ok_baseline"] = b.init_ok if b else False
+                row["init_ok_adaptive"] = a.init_ok if a else False
                 print(
                     f"    → APE {row['ape_baseline_m']} / {row['ape_adaptive_m']} m | "
                     f"Δ={row['delta_ape_pct']:.1f}% | {row['verdict']}"
@@ -322,9 +394,10 @@ def main() -> int:
         f"Batch {batch_dir.name}\n"
         f"Kind: {kind}\n"
         f"Finished at {datetime.now().isoformat(timespec='seconds')}\n"
-        f"Runs: {len(runs)} | failures: {failures} | elapsed: {elapsed/60:.1f} min\n"
+        f"Jobs: {n_jobs} | failures: {failures} | elapsed: {elapsed/60:.1f} min\n"
         f"Manifest: {manifest_path}\n"
         f"Build tables: {build_cmd}\n"
+        f"Journal: record batch id, n_launch/n_fail, resume command in журнал_эксперимента.md\n"
     )
     summary_path.write_text(summary, encoding="utf-8")
     print()

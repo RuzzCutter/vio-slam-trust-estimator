@@ -16,6 +16,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
+from repeat_stats import (  # noqa: E402
+    aggregate_compare,
+    attach_compare_full_from_batch,
+    render_repeats_csv,
+    render_repeats_latex,
+    render_repeats_markdown,
+)
 from run_results import (  # noqa: E402
     load_ablation_manifest,
     load_batch_manifest,
@@ -68,6 +75,12 @@ def main() -> int:
         default=["md", "latex", "csv"],
     )
     parser.add_argument("--title", default="EuRoC: baseline vs adaptive")
+    parser.add_argument(
+        "--compare-batch",
+        type=Path,
+        default=None,
+        help="Compare batch whose successful adaptive runs become ablation 'full'",
+    )
     args = parser.parse_args()
 
     kind = args.kind
@@ -84,6 +97,9 @@ def main() -> int:
         else:
             groups = scan_ablation_results(args.scan.resolve())
             source_label = args.scan.name
+        if args.compare_batch:
+            groups = attach_compare_full_from_batch(groups, args.compare_batch.resolve())
+            source_label = f"{source_label} + full from {args.compare_batch.name}"
         if not groups:
             print("No ablation groups found.", file=sys.stderr)
             return 1
@@ -117,10 +133,18 @@ def main() -> int:
     rows = sorted(rows, key=_sort_key)
     clean, degraded = split_clean_degraded(rows)
 
+    cells = aggregate_compare(rows)
+
     if "md" in args.format:
         combined = render_markdown_table(rows, title=f"{args.title} ({source_label})")
         p = args.out / "table_all.md"
         p.write_text(combined, encoding="utf-8")
+        outputs.append(p)
+        p = args.out / "table_repeats.md"
+        p.write_text(
+            render_repeats_markdown(cells, title=f"{args.title} — repeats ({source_label})"),
+            encoding="utf-8",
+        )
         outputs.append(p)
         if clean:
             p = args.out / "table_clean.md"
@@ -138,13 +162,22 @@ def main() -> int:
             encoding="utf-8",
         )
         outputs.append(p)
+        p = args.out / "table_repeats.tex"
+        p.write_text(
+            render_repeats_latex(cells, caption=f"{args.title} (repeats)", label="tab:ate_repeats"),
+            encoding="utf-8",
+        )
+        outputs.append(p)
 
     if "csv" in args.format:
         p = args.out / "table_all.csv"
         p.write_text(render_csv(rows), encoding="utf-8")
         outputs.append(p)
+        p = args.out / "table_repeats.csv"
+        p.write_text(render_repeats_csv(cells), encoding="utf-8")
+        outputs.append(p)
 
-    print(f"Rows: {len(rows)} (clean={len(clean)}, degraded={len(degraded)})")
+    print(f"Rows: {len(rows)} (clean={len(clean)}, degraded={len(degraded)}) | cells={len(cells)}")
     for p in outputs:
         print(f"  {p}")
     return 0

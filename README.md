@@ -271,13 +271,17 @@ colcon build --packages-select ov_msckf --symlink-install
 # Просмотр плана (без запуска)
 python3 scripts/run_batch.py --dry-run
 
-# Ночной batch: 10 compare × 2 прогона ≈ 20 VIO-запусков
+# Ночной batch: 10 условий × 9 независимых compare (каждый = baseline + adaptive)
 python3 scripts/run_batch.py --plan config/batch_paper.yaml
 
 # Продолжить прерванный batch (пропускает успешные строки manifest)
 python3 scripts/run_batch.py --resume datasets/results/batches/paper_main_YYYYMMDD_HHMMSS
 
-# Таблицы из batch
+# Smoke повторов (короткий MH_01, 2 пуска) — после того как на диске будет место
+python3 scripts/run_batch.py --plan config/batch_smoke.yaml --dry-run
+python3 scripts/run_batch.py --plan config/batch_smoke.yaml
+
+# Таблицы из batch (table_all — по пускам, table_repeats — mean±std / p / failure)
 python3 scripts/build_tables.py --batch datasets/results/batches/paper_main_... --out paper_tables/
 
 # Таблицы из уже существующих каталогов results/ (автопаринг baseline+adaptive)
@@ -289,24 +293,34 @@ python3 scripts/build_tables.py --scan datasets/results --out paper_tables/
 ```
 datasets/results/batches/<batch_id>/
 ├── batch_plan.yaml      # копия плана
-├── manifest.jsonl       # одна строка JSON на compare (dirs, APE, verdict)
-├── run_01_....log       # полный лог каждого compare
+├── manifest.jsonl       # одна строка JSON на repeat (dirs, APE, flags, repeat)
+├── run_001_r1_....log
 └── batch_summary.txt
 ```
 
-**Выход `build_tables.py`:** `paper_tables/table_all.md`, …, `table_ablation.md` (режим `--kind ablation`).
+**Выход `build_tables.py`:** `paper_tables/table_repeats.md` (для статьи), `table_all.md`, `table_ablation.md`.
 
 ### Ablation f₁–f₄
 
-Отключение одного признака за прогон (`trust_use_f*` → false, среднее c по оставшимся 3):
+Отключение одного признака за прогон (`trust_use_f*` → false, среднее c по оставшимся 3). Отдельные `full`-прогоны не нужны: full берётся из успешных adaptive compare.
 
 ```bash
 bash scripts/run_euroc.sh adaptive MH_04_difficult --ablate f1 --degrade gaussian:5 --eval
-python3 scripts/run_batch.py --plan config/batch_ablation.yaml   # 20 прогонов
-python3 scripts/build_tables.py --batch datasets/results/batches/ablation_d1_... --kind ablation
+python3 scripts/run_batch.py --plan config/batch_ablation.yaml   # 16×7 adaptive
+python3 scripts/build_tables.py --batch datasets/results/batches/ablation_d1_... \
+  --kind ablation --compare-batch datasets/results/batches/paper_main_...
 ```
 
 После изменений в `TrustEstimator` пересобрать: `colcon build --packages-select ov_msckf --symlink-install`.
+
+### Корреляция c(t) с поштучной ATE
+
+После `--eval` в `metrics/pose_errors.csv` пишутся `t, e_ate_m` (ошибка после Sim(3)).
+
+```bash
+python3 scripts/correlate_trust_ate.py --batch datasets/results/batches/paper_main_...
+# → paper_tables/table_trust_corr.md и trust_corr.json в каждом RESULT_DIR
+```
 
 ---
 
@@ -359,7 +373,8 @@ python3 scripts/build_tables.py --batch datasets/results/batches/paper_main_... 
 
 # Ablation f₁–f₄ (на деградации)
 python3 scripts/run_batch.py --plan config/batch_ablation.yaml
-python3 scripts/build_tables.py --batch datasets/results/batches/ablation_d1_... --kind ablation --out paper_tables/
+python3 scripts/build_tables.py --batch datasets/results/batches/ablation_d1_... \
+  --kind ablation --compare-batch datasets/results/batches/paper_main_... --out paper_tables/
 ```
 
 ---
