@@ -1,5 +1,5 @@
-# Segment from 07_Li2013_MSCKF.pdf
-# Source: literature/pdf/07_Li2013_MSCKF.pdf
+# Segment from 15_Li2013_MSCKF.pdf
+# Source: literature/pdf/15_Li2013_MSCKF.pdf
 # Auto-extracted for citation; verify page numbers in original PDF.
 
 High-precision, consistent EKF-based

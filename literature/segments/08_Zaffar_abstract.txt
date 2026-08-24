@@ -1,5 +1,5 @@
-# Segment from 20_Zaffar_VPR-Bench.pdf
-# Source: literature/pdf/20_Zaffar_VPR-Bench.pdf
+# Segment from 08_Zaffar_VPR-Bench.pdf
+# Source: literature/pdf/08_Zaffar_VPR-Bench.pdf
 # Auto-extracted for citation; verify page numbers in original PDF.
 
 ABSTRACT

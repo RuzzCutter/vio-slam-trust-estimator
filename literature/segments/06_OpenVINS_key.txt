@@ -1,5 +1,5 @@
-# Segment from 08_OpenVINS.pdf
-# Source: literature/pdf/08_OpenVINS.pdf
+# Segment from 06_OpenVINS.pdf
+# Source: literature/pdf/06_OpenVINS.pdf
 # Auto-extracted for citation; verify page numbers in original PDF.
 
 ABSTRACT

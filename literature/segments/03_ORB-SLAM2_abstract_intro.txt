@@ -1,5 +1,5 @@
-# Segment from 05_ORB-SLAM2.pdf
-# Source: literature/pdf/05_ORB-SLAM2.pdf
+# Segment from 03_ORB-SLAM2.pdf
+# Source: literature/pdf/03_ORB-SLAM2.pdf
 # Auto-extracted for citation; verify page numbers in original PDF.
 
                                                                This paper has been accepted for publication in IEEE Transactions on Robotics.

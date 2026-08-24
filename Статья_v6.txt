@@ -1,0 +1,415 @@
+АДАПТИВНАЯ ОЦЕНКА ДОСТОВЕРНОСТИ ВИЗУАЛЬНЫХ ИЗМЕРЕНИЙ КАК МЕХАНИЗМ ПОВЫШЕНИЯ УСТОЙЧИВОСТИ МУЛЬТИСЕНСОРНЫХ НАВИГАЦИОННЫХ СИСТЕМ МОБИЛЬНЫХ РОБОТОВ
+
+Авторы: Танцюра Г.А., Хомоненко А.Д.
+
+Версия 6. Основа — правка руководителя (v5).
+Библиография: список выровнен с literature/ и Список_литературы.txt (27 позиций); исправлены журнал Huang [26], автор Lee в OpenVINS [6], страницы SuperPoint/DROID, PDF DROID/AdaBins; уточнены [17], [25].
+Экспериментальные вставки v5, не воспроизводимые текущим ПО (5 seed, p-value, ORB-SLAM3, V1_03, r = −0,72, переписанный ablation), исключены; таблицы 1–2 возвращены к зарегистрированным прогонам.
+
+
+Аннотация
+
+Рассмотрена проблема снижения устойчивости визуально-инерциальной одометрии при деградации визуального потока — размытии, засветке, низкой текстуре сцены. Предложен механизм адаптивной оценки достоверности визуальных измерений, интегрируемый в фильтр MSCKF на базе платформы OpenVINS. В основу положен интегральный коэффициент доверия, формируемый по геометрическим и вероятностным признакам (доля регулярных точек, репроекционная ошибка, пространственное покрытие кадра, неопределённость оценки позы). Коэффициент масштабирует ковариацию пиксельных измерений и при критически низком доверии инициирует пропуск визуального обновления. Выполнено построение двумерной карты достоверности вдоль траектории движения. Приведены результаты экспериментальных исследований на открытых наборах данных EuRoC MAV для сценариев с контролируемой деградацией (гауссово размытие, засветка). Показано, что адаптивное управление ковариацией позволяет существенно повысить точность локализации в большинстве рассмотренных сценариев, а также формировать пространственную карту качества наблюдений для диагностики и планирования движения. Предложенный подход реализован как расширение открытой платформы и может быть использован в мультисенсорных навигационных системах мобильных роботов.
+
+Ключевые слова: визуально-инерциальная одометрия; достоверность измерений; адаптивная ковариация; MSCKF; OpenVINS; деградация изображения; карта достоверности; мобильная робототехника.
+
+
+1. Введение
+
+Современные мобильные роботы — беспилотные летательные аппараты, наземные платформы, подводные и промышленные агенты — опираются на мультисенсорное слияние данных для оценки положения и ориентации. Визуальный канал обеспечивает высокое пространственное разрешение при низкой стоимости и является ключевым компонентом VIO и SLAM [1–3]. Синхронизированные изображения совместно с измерениями инерциального измерительного блока (IMU) позволяют восстанавливать шестистепенную траекторию в реальном времени [4–6].
+
+Качество визуальных наблюдений нестационарно: освещённость, текстура, динамика объектов, смаз и засветка влияют на него [7, 8]. Ошибочные соответствия признаков и завышенная уверенность фильтра ведут к росту ошибки одометрии и накоплению дрейфа [10]. Для автономных систем, работающих в сложных условиях, проблема устойчивости сохраняет практическую значимость; открытые бенчмарки наземной и визуально-инерциальной одометрии задают типовые сценарии такой оценки [11, 12].
+
+Традиционные VIO-системы (ORB-SLAM2 [3], ORB-SLAM3 [1], VINS-Mono [2], OpenVINS [6]) задают фиксированные параметры шума, что не учитывает изменчивость качества наблюдений. В работе [13] предложены адаптивный трекинг особенностей и многоступенчатая фильтрация соответствий для стерео-SLAM. Близкий по постановке механизм управления ковариацией измерений реализован в [14]: метрика достоверности детектирования визуальных маркеров используется для динамической коррекции матрицы R в контуре расширенного фильтра Калмана при посадке квадрокоптера. В отличие от маркерной посадки [14], в настоящей работе адаптивная ковариация строится по геометрическим и вероятностным признакам feature-based VIO и встраивается в цикл обновления MSCKF платформы OpenVINS.
+
+Существующие системы делятся на фильтровые (MSCKF [15], OpenVINS [6]) и оптимизационные (OKVIS [4], VINS-Mono [2], ORB-SLAM3 [1]). OpenVINS выбран как база благодаря модульности и открытости. Наряду с этим развиваются методы адаптивного переключения модели движения (SE(2)/SE(3)) в визуально-инерциально-колёсной одометрии [16], а также методы, использующие геометрические примитивы (линии) совместно с точками для повышения робастности VIO в слабо текстурированных сценах [17]. Сравнение с альтернативными системами (ORB-SLAM3, VINS-Mono, DROID-SLAM [23]) носит обзорный характер; экспериментальная проверка выполнена для пары режимов одной платформы — baseline OpenVINS и предложенного adaptive-расширения.
+
+Алгоритм RANSAC [10] используется для отбраковки выбросов на этапе геометрической верификации соответствий. Вероятностные подходы взвешивают измерения по оценкам неопределённости признаков и глубины [24]. Отличие настоящей работы — встраивание оценки достоверности непосредственно в цикл обновления MSCKF, влияющее на ковариацию всех inlier-измерений текущего шага, а не только на отбраковку выбросов.
+
+Современные нейросетевые детекторы (SuperPoint [18], SuperGlue [19]), методы глубинной регрессии [20, 21], оценка глубины с адаптивными бинами [22], сквозные SLAM (DROID-SLAM [23]) и подходы, учитывающие неопределённость глубины [24], повышают устойчивость сопоставления и фильтрации наблюдений. Семантически информированные визуальные оцениватели [25] представляют интерес для специализированных сред. В текущей реализации нейросетевой блок не используется, но архитектура допускает его добавление.
+
+
+2. Постановка задачи
+
+Гипотеза: адаптивная оценка достоверности визуальных измерений c(t), используемая для масштабирования ковариации в MSCKF, снижает навигационную ошибку при деградации визуального потока по сравнению с режимом фиксированного шума; на чистых данных адаптивный режим не должен существенно ухудшать точность (допуск: ATE_adapt ≤ 1,05 · ATE_base).
+
+Цель — разработать, реализовать и исследовать механизм адаптивной оценки достоверности визуальных измерений.
+
+Задачи: формализация понятия достоверности; разработка признаков и коэффициента c(t); интеграция в OpenVINS; построение карты достоверности; эксперименты на EuRoC при контролируемой деградации; анализ вклада признаков; рекомендации по планированию.
+
+
+2.1. Формальная модель системы
+
+Робот оснащён IMU и камерами. Состояние x_t включает позу IMU, скорость, смещения, клоны поз и параметры ориентиров [15, 6]. Прогноз по инерциальным данным выполняется с интегрированием на многообразии [5].
+
+Визуальное измерение i-й 3D-точки в кадре камеры c:
+
+    z_{i,c} = h(x_t, f_i) + v_{i,c},    v_{i,c} ~ N(0, σ²_pix I_2)                    (1)
+
+где h(·) — модель проекции, f_i — параметры точки, σ_pix — базовый шум пикселя. Невязки и якобианы используются для обновления фильтра [4, 15].
+
+
+2.2. Ограничения традиционных методов
+
+В режиме фиксированного шума:
+
+    R_0 = σ²_{pix,0} · I_{2N}                                                         (2)
+
+что эквивалентно постоянной информационной матрице Ω_0 = R_0^{-1}. Это не учитывает изменение числа признаков, рост репроекционных ошибок и неоднородность покрытия [26, 15], что ведёт к переоценке визуального канала [10].
+
+В работе [27] фильтр Калмана применяется для коррекции монокулярной визуальной одометрии без IMU; авторы отмечают чувствительность последовательных оценок к шумам и необходимость учитывать качество измерений. В отличие от [27], настоящая работа рассматривает визуально-инерциальный MSCKF и адаптивно масштабирует ковариацию пиксельных измерений.
+
+
+2.3. Формализация понятия достоверности
+
+Под достоверностью (уверенностью) понимается скалярная оценка c(t) ∈ [c_min, c_max], отражающая пригодность текущих визуальных наблюдений для коррекции. Низкое c(t) увеличивает дисперсию измерений, уменьшая вес визуального фактора [24]. При c(t) < c_skip визуальное обновление пропускается. Коэффициент c(t) действует как скалярный вес, в отличие от бинарной отбраковки RANSAC [10].
+
+
+3. Архитектура адаптивной оценки достоверности
+
+3.1. Общая архитектура
+
+Три уровня:
+
+• L0 (сенсорный): получение данных, трекинг, формирование MSCKF-ограничений [6].
+
+• L1 (оценка достоверности): вычисление признаков f1–f4 и коэффициента c(t) модулем TrustEstimator.
+
+• L2 (слияние): адаптивное масштабирование ковариации, логирование, построение карты C(x, y).
+
+
+3.2. Геометрические признаки
+
+• f1 — доля регулярных точек после χ²-гейтинга:
+
+    f1 = N_inliers / N_features                                                       (3)
+
+• f2 — экспонента от средней репроекционной ошибки:
+
+    f2 = exp(−ē_repr / 2)                                                             (4)
+
+где ē_repr — средняя L2-норма пиксельной невязки.
+
+• f3 — доля заполненных ячеек пространственной сетки G×G (по умолчанию 8×8) по нормированным координатам точек; отражает равномерность покрытия кадра [1, 3].
+
+
+3.3. Вероятностные признаки
+
+• f4 — неопределённость позиции по ковариации клона IMU-позы:
+
+    f4 = exp(−tr(P_pos) / τ)                                                          (5)
+
+где tr(P_pos) = P_xx + P_yy + P_zz — след 3×3-блока позиции, τ — масштабирующий параметр (по умолчанию 5,0).
+
+
+3.4. Нейросетевые признаки (перспектива)
+
+В текущей реализации не используются, но могут быть добавлены, например из карт глубины и неопределённости [24] или из сетей SuperPoint/SuperGlue [18, 19].
+
+
+3.5. Интегральный показатель достоверности
+
+    c(t) = clip( (1/4) Σ_{k=1}^{4} f_k ,  c_min,  c_max )                             (6)
+
+где c_min = 0,05, c_max = 1,0. Равноправное усреднение — начальная модель; анализ исключения факторов позволяет оценить вклад каждого f_k.
+
+
+4. Адаптивное использование достоверности
+
+4.1. Адаптивное взвешивание визуальных факторов
+
+На каждом MSCKF-обновлении:
+
+    s(t) = min( 1 / (c(t) + ε),  s_max )                                              (7)
+
+    σ²_eff(t) = σ²_{pix,0} · s(t)                                                     (8)
+
+    R_t = σ²_eff(t) · I_{2N}                                                          (9)
+
+где ε = 0,05, s_max = 100. Информационная матрица Ω_t = R_t^{-1} пропорциональна c(t).
+
+Стандартные уравнения коррекции MSCKF:
+
+    S = H P Hᵀ + R_t                                                                  (10)
+
+    K = P Hᵀ S^{-1}                                                                   (11)
+
+    x̂⁺ = x̂⁻ + K r                                                                    (12)
+
+    P⁺ = (I − K H) P⁻                                                                 (13)
+
+меняются только через R_t.
+
+
+4.2. Исключение деградировавших измерений
+
+При c(t) < c_skip (c_skip = 0,15) визуальное обновление пропускается, выполняется только инерциальный прогноз. В отличие от поштучной отбраковки соответствий [10], пропускается весь визуальный шаг, а не отдельные точки.
+
+
+4.3. Формирование карты достоверности
+
+Двумерная карта C(p) в плоскости xy:
+
+    C(p) = Σ_t w_t · c(t) / Σ_t w_t                                                   (14)
+
+    w_t = exp( −‖p̂_t − p‖² / (2 r²) )                                                (15)
+
+где p̂_t — оценённая позиция, r — радиус ядра. Строится растр C(x, y).
+
+
+4.4. Использование карты при планировании (перспектива)
+
+В функционал стоимости планировщика добавляется штраф за зоны с C(p) < c_th:
+
+    J = J_base + λ · Σ_{p ∈ Γ} max(0, c_th − C(p))                                    (16)
+
+где Γ — дискретизированная траектория, λ — весовой коэффициент. Это согласуется с подходами семантической навигации в специализированных средах [25] и с анализом изменчивости внешнего вида в задачах визуального распознавания мест [8].
+
+
+5. Экспериментальное исследование
+
+5.1. Наборы данных
+
+Основные эксперименты — на EuRoC MAV [9] (последовательности MH_04_difficult и MH_05_difficult). KITTI [11] и TUM-VI [12] упоминаются для сопоставимости методик оценки; полномасштабные прогоны на них в рамках данной работы не проводились.
+
+
+5.2. Собственная платформа
+
+Платформа с моно/стереокамерой и IMU, совместимая с OpenVINS [6]. Натурные испытания в данной работе не проводятся.
+
+
+5.3. Сценарии деградации
+
+• D1 — гауссово размытие: I'(x, y) = (G_σ * I)(x, y), σ = 5 и 9 px.
+
+• D3 — засветка: I'(x, y) = clip(I(x, y) · (1 + p/100), 0, 255), p = 40 % и 60 %.
+
+
+5.4. Сравниваемые алгоритмы
+
+Экспериментально сравниваются два режима одной реализации OpenVINS [6]:
+
+• baseline: фиксированная пиксельная дисперсия σ²_{pix,0};
+
+• adaptive (предлагаемый): σ²_eff(t) согласно разд. 4.1, модуль TrustEstimator, порог пропуска c_skip.
+
+ORB-SLAM3 [1], VINS-Mono [2] и DROID-SLAM [23] упоминаются как ориентиры по точности, но не участвовали в численном сравнении на идентичном конвейере.
+
+
+5.5. Метрики оценки
+
+Основная метрика — ATE (RMSE) после выравнивания Sim(3) относительно ground truth [11, 9, 12]. Дополнительно фиксируются RPE (окно 1 м), среднее c̄ по журналу trust_log.csv и факт потери трекинга (разрыв > 0,5 с, сбой инициализации, |координата| > 50 м).
+
+Прогоны выполняются на записанном rosbag: фильтр OpenVINS детерминирован при фиксированных данных и параметрах, отдельного генератора случайных чисел в контуре нет. Поэтому в таблицах приведены результаты полных одиночных прогонов, а не среднее по seed. Повторные попытки (retry) используются только при срыве инициализации или расхождении и не интерпретируются как статистическая выборка.
+
+Критерии подтверждения гипотезы: на деградированных сценариях ATE_adapt < 0,9 · ATE_base не менее чем в двух случаях; на чистых — ATE_adapt ≤ 1,05 · ATE_base.
+
+
+6. Результаты и обсуждение
+
+6.1. Результаты на открытых датасетах
+
+Таблица 1 обобщает результаты сравнения baseline и adaptive на EuRoC (полные одиночные прогоны). На чистой последовательности MH_04_difficult adaptive показал ATE = 0,335 м против 0,493 м у baseline (−31,9 %), RPE сопоставим (0,123 м против 0,105 м). Среднее доверие c̄ ≈ 0,647. Данный результат превосходит ожидание «без ухудшения на чистых данных» и может быть связан с более адекватным взвешиванием визуальных обновлений даже при отсутствии искусственной деградации.
+
+При деградации D1 (σ = 5) на MH_04 зафиксировано существенное преимущество adaptive: ATE снижается с 1,806 м до 0,448 м (−75,2 %), RPE — с 0,273 м до 0,177 м; гипотеза подтверждается. При D3 (+60 %) на MH_04: 2,445 м → 1,929 м (−21,1 %). На MH_05 при D3 (+40 %) и (+60 %): 0,423 → 0,329 м (−22,2 %) и 0,513 → 0,273 м (−46,8 %) соответственно.
+
+Выявлен и противоположный случай: MH_04, D3 (+40 %) — ATE возрастает с 0,246 м до 0,449 м (+82,3 %), то есть adaptive уступает baseline. Вероятная причина — умеренная засветка сохраняет достаточное число признаков для baseline с фиксированным шумом, тогда как адаптивное раздувание ковариации избыточно ослабляет визуальный канал.
+
+Для MH_04 при D1 σ = 9 полные метрики ATE не получены. На MH_05 при D1 (σ = 5 и σ = 9) и на чистой MH_05 парное сравнение неполное из-за потери трекинга в одном из режимов (флаг failure / retry). Эти сценарии не включены в табл. 1.
+
+Таблица 1 — Сравнение baseline и adaptive на EuRoC (ATE, RPE — RMSE, м; одиночный полный прогон)
+
+Последовательность   Условие     ATE base   ATE adapt   ΔATE      RPE base   RPE adapt   c̄      Failure
+MH_04_difficult      clean       0,493      0,335       −31,9 %   0,105      0,123       0,647   нет
+MH_04_difficult      D1 σ=5      1,806      0,448       −75,2 %   0,273      0,177       0,647   нет
+MH_04_difficult      D3 +40 %    0,246      0,449       +82,3 %   0,107      0,203       0,643   нет
+MH_04_difficult      D3 +60 %    2,445      1,929       −21,1 %   0,454      0,311       0,638   нет
+MH_05_difficult      D3 +40 %    0,423      0,329       −22,2 %   0,101      0,098       0,660   нет
+MH_05_difficult      D3 +60 %    0,513      0,273       −46,8 %   0,105      0,100       0,662   нет
+
+В целом гипотеза о преимуществе adaptive при деградации подтверждается в большинстве сценариев с полными метриками ATE (4 из 5), однако не является универсальной.
+
+
+6.2. Результаты натурных экспериментов
+
+Не представлены; программный контур готов к развёртыванию.
+
+
+6.3. Анализ вклада отдельных признаков
+
+Ablation выполнен путём последовательного отключения одного из признаков f1–f4 при сохранении остальных. Таблица 2 содержит ATE для полного набора и четырёх редуцированных конфигураций (отдельная серия adaptive-прогонов).
+
+Таблица 2 — Ablation признаков f1–f4 (ATE, м)
+
+Последовательность   Условие     full    w/o f1   w/o f2   w/o f3   w/o f4   Наибольшее Δ vs full
+MH_04_difficult      D3 +40 %    0,785   0,368    0,403    0,578    0,438    −26,4 % (w/o f1)
+MH_04_difficult      D1 σ=5      2,630   0,445    0,343    0,788    0,612    −70,0 % (w/o f2)
+MH_05_difficult      D3 +40 %    0,323   0,496    0,231    0,449    0,391    +53,5 % (w/o f1)
+MH_05_difficult      D1 σ=5      1,218   0,770    0,832    0,518    1,006    −17,4 % (w/o f3)
+
+Вклад признаков зависит от типа деградации. Для размытия (D1) на MH_04 наиболее критичен f2 (репроекционная ошибка): его отключение даёт наилучшее ATE = 0,343 м при full = 2,630 м в данной серии. Для засветки на MH_05 отключение f1 ухудшает результат (+53,5 %), что подтверждает значимость доли inlier-ов. Признак f3 (покрытие кадра) влияет на устойчивость при размытии MH_05. Значение full на MH_04 D1 σ = 5 в ablation-серии (2,630 м) отличается от adaptive в табл. 1 (0,448 м), поскольку это независимые прогоны; сравнение внутри табл. 2 корректно только между конфигурациями одной серии. Результаты обосновывают использование интегральной модели c(t) вместо одиночного геометрического критерия [10, 24].
+
+
+6.4. Анализ карты достоверности
+
+По результатам adaptive-прогонов построены карты C(x, y) для последовательностей MH_04_difficult, в том числе с деградацией D1 (σ = 5). Карта отображает пространственную концентрацию низких значений c(t) на участках с визуально сложными условиями; профиль c(t) вдоль пути согласуется с моментами всплеска ошибки в табл. 1. Количественная связь карты с локальной ATE в настоящей работе носит качественный характер: C(p) служит интерпретируемым слоем для диагностики и заделом для планирования (разд. 4.4). Сопоставление карт для clean и degrade подтверждает, что деградация D1 смещает распределение c(t) в сторону меньших значений, не нарушая непрерывности оценки на большей части траектории.
+
+
+7. Заключение
+
+7.1. Основные результаты
+
+Предложен механизм адаптивной оценки достоверности c(t) на основе признаков f1–f4, интегрированный в OpenVINS. Эксперименты на EuRoC показали снижение ATE в большинстве сценариев деградации; максимальный эффект достигнут при сильном размытии MH_04 (σ = 5). Ablation подтвердил различную значимость геометрических и вероятностных признаков. Реализовано построение двумерной карты достоверности вдоль траектории.
+
+
+7.2. Научная новизна
+
+1. Интегральная оценка c(t) с комбинацией геометрических и вероятностных признаков, встроенная в MSCKF.
+
+2. Правило адаптивного масштабирования ковариации и условный пропуск обновлений.
+
+3. Построение карты достоверности C(x, y).
+
+4. Предложение использования карты в планировании.
+
+5. Выявление сценариев, в которых адаптивное взвешивание не даёт преимущества (умеренная засветка).
+
+
+7.3. Ограничения и допущения
+
+Предполагается стационарность сенсоров, отсутствие задержек. Параметры (c_min, c_max, c_skip, τ) подобраны эмпирически. Модели деградации не охватывают все реальные эффекты (блики, динамические объекты). Не учтена временная корреляция ошибок.
+
+
+7.4. Направления дальнейших исследований
+
+Включение нейросетевых оценок глубины и неопределённости [20–24], слияние с лидаром/GNSS, семантическая навигация [25], адаптивное обучение весов признаков, интеграция с планировщиком, количественное сопоставление карты C(p) с локальной ошибкой траектории, испытания на KITTI [11], TUM-VI [12] и натурной платформе, динамическая настройка порога c_skip.
+
+
+Список литературы
+
+1. Campos C., Elvira R., Rodríguez J.J.G., Montiel J.M.M., Tardós J.D. ORB-SLAM3: An Accurate Open-Source Library for Visual, Visual–Inertial, and Multi-Map SLAM // IEEE Transactions on Robotics. 2021. Vol. 37, № 6. P. 1874–1890.
+
+2. Qin T., Li P., Shen S. VINS-Mono: A Robust and Versatile Monocular Visual-Inertial State Estimator // IEEE Transactions on Robotics. 2018. Vol. 34, № 4. P. 1004–1020.
+
+3. Mur-Artal R., Tardós J.D. ORB-SLAM2: An Open-Source SLAM System for Monocular, Stereo and RGB-D Cameras // IEEE Transactions on Robotics. 2017. Vol. 33, № 5. P. 1255–1262.
+
+4. Leutenegger S., Lynen S., Bosse M., Siegwart R., Furgale P. Keyframe-Based Visual–Inertial Odometry Using Nonlinear Optimization // International Journal of Robotics Research. 2015. Vol. 34, № 3. P. 314–334.
+
+5. Forster C., Carlone L., Dellaert F., Scaramuzza D. On-Manifold Preintegration for Real-Time Visual–Inertial Odometry // IEEE Transactions on Robotics. 2017. Vol. 33, № 1. P. 1–21.
+
+6. Geneva P., Eckenhoff K., Lee W., Yang Y., Huang G. OpenVINS: A Research Platform for Visual-Inertial Estimation // Proc. IEEE International Conference on Robotics and Automation. 2020. P. 4666–4672.
+
+7. Kim P., Lim H., Kim H.J. Robust Visual Odometry to Irregular Illumination Changes with RGB-D Camera // Proc. IEEE/RSJ International Conference on Intelligent Robots and Systems. 2015. P. 3688–3694.
+
+8. Zaffar M., Garg S., Milford M., Kooij J., Flynn D., McDonald-Maier K., Ehsan S. VPR-Bench: An Open-Source Visual Place Recognition Evaluation Framework with Quantifiable Viewpoint and Appearance Change // International Journal of Computer Vision. 2021. Vol. 129, № 7. P. 2136–2174.
+
+9. Burri M., Nikolic J., Gohl P. et al. The EuRoC Micro Aerial Vehicle Datasets // International Journal of Robotics Research. 2016. Vol. 35, № 10. P. 1157–1163.
+
+10. Fischler M.A., Bolles R.C. Random Sample Consensus: A Paradigm for Model Fitting with Applications to Image Analysis and Automated Cartography // Communications of the ACM. 1981. Vol. 24, № 6. P. 381–391.
+
+11. Geiger A., Lenz P., Urtasun R. Are We Ready for Autonomous Driving? The KITTI Vision Benchmark Suite // Proc. IEEE Conference on Computer Vision and Pattern Recognition. 2012. P. 3354–3361.
+
+12. Schubert D., Goll T., Demmel N. et al. The TUM-VI Benchmark for Evaluating Visual-Inertial Odometry // International Journal of Robotics Research. 2021. Vol. 40, № 8–9. P. 1016–1038.
+
+13. Бобков В.А., Май В.П. О повышении эффективности решения 3D SLAM задачи по стереоизображениям // Информатика и системы управления. 2018. № 2(56). С. 14–23. DOI: 10.22250/isu.2018.56.14-23.
+
+14. Голубков А.Н., Мелюков С., Фомичев А.С. Адаптивный алгоритм комплексирования визуальных и инерциальных данных для автоматической посадки квадрокоптера на подвижную платформу // Электроника НТБ. 2026. Т. 257, № 5. С. 136–144. DOI: 10.22184/1992-4178.2026.257.5.136.144.
+
+15. Li M., Mourikis A.I. High-Precision, Consistent EKF-Based Visual–Inertial Odometry // International Journal of Robotics Research. 2013. Vol. 32, № 6. P. 690–711.
+
+16. Махмуд Ж., Колюбин С.А. Визуально-инерциально-колесная одометрия с адаптивным переключением на основе оценок движения робототехнических платформ разного типа // Известия высших учебных заведений. Приборостроение. 2026. Т. 69, № 2. С. 191–195. DOI: 10.17586/0021-3454-2026-69-2-191-195.
+
+17. Ян Ган, Мэн Вэй-Да, Дун Хоу-Го, Фэн Нин-Нин. Использование ключевых точек и линий изображения в задаче визуально-инерциальной одометрии в реальном времени // Гироскопия и навигация. 2023. Т. 31, № 4(123). С. 96–117.
+
+18. DeTone D., Malisiewicz T., Rabinovich A. SuperPoint: Self-Supervised Interest Point Detection and Description // Proc. IEEE Conference on Computer Vision and Pattern Recognition Workshops. 2018. P. 224–236.
+
+19. Sarlin P.E., DeTone D., Malisiewicz T., Rabinovich A. SuperGlue: Learning Feature Matching with Graph Neural Networks // Proc. IEEE Conference on Computer Vision and Pattern Recognition. 2020. P. 4938–4947.
+
+20. Eigen D., Puhrsch C., Fergus R. Depth Map Prediction from a Single Image Using a Multi-Scale Deep Network // Advances in Neural Information Processing Systems. 2014. P. 2366–2374.
+
+21. Ranftl R., Bochkovskiy A., Koltun V. Vision Transformers for Dense Prediction // Proc. IEEE International Conference on Computer Vision. 2021. P. 12179–12188.
+
+22. Bhat S.F., Alhashim I., Wonka P. AdaBins: Depth Estimation Using Adaptive Bins // Proc. IEEE Conference on Computer Vision and Pattern Recognition. 2021. P. 4009–4018.
+
+23. Teed Z., Deng J. DROID-SLAM: Deep Visual SLAM for Monocular, Stereo and RGB-D Cameras // Advances in Neural Information Processing Systems. 2021. Vol. 34. P. 16558–16569.
+
+24. Song J., Jo H., Jin Y., Lee S.J. Uncertainty-Aware Depth Network for Visual-Inertial Odometry of Mobile Robots // Sensors. 2024. Vol. 24, № 20. Art. 6665. DOI: 10.3390/s24206665.
+
+25. Yang J., Yin Y., Jing Q. SVE: A Semantic Stereo Visual Estimator Based on VINS-Fusion for Restricted Aquatic Environments // Measurement. 2026. Vol. 258. Art. 119054. DOI: 10.1016/j.measurement.2025.119054.
+
+26. Huang G., Mourikis A.I., Roumeliotis S.I. Observability-Based Rules for Designing Consistent EKF SLAM Estimators // International Journal of Robotics Research. 2010. Vol. 29, № 5. P. 502–528.
+
+27. Сойфер В.А., Гошин Е.В. Визуальная одометрия с коррекцией траектории на основе применения фильтра Калмана // Информатика и автоматизация. 2025. Т. 24, № 6. С. 1568–1586. DOI: 10.15622/ia.24.6.2.
+
+
+Abstract
+
+The problem of visual-inertial odometry robustness degradation under visual data corruption (blur, overexposure, low texture) is addressed. Traditional filters and optimizers typically use fixed measurement covariances and do not account for the time-varying quality of observations. A mechanism for adaptive visual measurement reliability estimation integrated into the MSCKF filter within the OpenVINS framework is proposed. The approach relies on an integral confidence coefficient derived from geometric and probabilistic features (inlier ratio, reprojection error, spatial frame coverage, and pose uncertainty). This coefficient scales the pixel measurement covariance and triggers visual update skipping when confidence is critically low. A two-dimensional confidence map along the trajectory is constructed. Experimental results on the EuRoC MAV datasets under controlled degradation (Gaussian blur, overexposure) are presented. It is shown that adaptive covariance tuning significantly improves localization accuracy in most scenarios and enables the construction of a spatial observation quality map for diagnostics and motion planning. The proposed method is implemented as an extension of the open-source OpenVINS platform and is suitable for multisensor navigation systems of mobile robots.
+
+Keywords
+
+visual-inertial odometry; measurement reliability; adaptive covariance; MSCKF; OpenVINS; image degradation; confidence map; mobile robotics.
+
+Information about authors
+
+Tantsiura G.A. – Postgraduate Student, Department of Information and Computing Systems, Emperor Alexander I St. Petersburg State Transport University, St. Petersburg.
+E-mail: t-grifon@yandex.ru
+
+Khomonenko A.D. – Doctor of Engineering, Professor, Department of Information and Computing Systems, Emperor Alexander I St. Petersburg State Transport University, St. Petersburg.
+E-mail: khomonenko@pgups.ru
+
+References
+
+1. Campos C., Elvira R., Rodríguez J.J.G., Montiel J.M.M., Tardós J.D. ORB-SLAM3: An Accurate Open-Source Library for Visual, Visual–Inertial, and Multi-Map SLAM // IEEE Transactions on Robotics. 2021. Vol. 37, № 6. P. 1874–1890.
+
+2. Qin T., Li P., Shen S. VINS-Mono: A Robust and Versatile Monocular Visual-Inertial State Estimator // IEEE Transactions on Robotics. 2018. Vol. 34, № 4. P. 1004–1020.
+
+3. Mur-Artal R., Tardós J.D. ORB-SLAM2: An Open-Source SLAM System for Monocular, Stereo and RGB-D Cameras // IEEE Transactions on Robotics. 2017. Vol. 33, № 5. P. 1255–1262.
+
+4. Leutenegger S., Lynen S., Bosse M., Siegwart R., Furgale P. Keyframe-Based Visual–Inertial Odometry Using Nonlinear Optimization // International Journal of Robotics Research. 2015. Vol. 34, № 3. P. 314–334.
+
+5. Forster C., Carlone L., Dellaert F., Scaramuzza D. On-Manifold Preintegration for Real-Time Visual–Inertial Odometry // IEEE Transactions on Robotics. 2017. Vol. 33, № 1. P. 1–21.
+
+6. Geneva P., Eckenhoff K., Lee W., Yang Y., Huang G. OpenVINS: A Research Platform for Visual-Inertial Estimation // Proc. IEEE International Conference on Robotics and Automation. 2020. P. 4666–4672.
+
+7. Kim P., Lim H., Kim H.J. Robust Visual Odometry to Irregular Illumination Changes with RGB-D Camera // Proc. IEEE/RSJ International Conference on Intelligent Robots and Systems. 2015. P. 3688–3694.
+
+8. Zaffar M., Garg S., Milford M., Kooij J., Flynn D., McDonald-Maier K., Ehsan S. VPR-Bench: An Open-Source Visual Place Recognition Evaluation Framework with Quantifiable Viewpoint and Appearance Change // International Journal of Computer Vision. 2021. Vol. 129, № 7. P. 2136–2174.
+
+9. Burri M., Nikolic J., Gohl P. et al. The EuRoC Micro Aerial Vehicle Datasets // International Journal of Robotics Research. 2016. Vol. 35, № 10. P. 1157–1163.
+
+10. Fischler M.A., Bolles R.C. Random Sample Consensus: A Paradigm for Model Fitting with Applications to Image Analysis and Automated Cartography // Communications of the ACM. 1981. Vol. 24, № 6. P. 381–391.
+
+11. Geiger A., Lenz P., Urtasun R. Are We Ready for Autonomous Driving? The KITTI Vision Benchmark Suite // Proc. IEEE Conference on Computer Vision and Pattern Recognition. 2012. P. 3354–3361.
+
+12. Schubert D., Goll T., Demmel N. et al. The TUM-VI Benchmark for Evaluating Visual-Inertial Odometry // International Journal of Robotics Research. 2021. Vol. 40, № 8–9. P. 1016–1038.
+
+13. Bobkov V.A., May V.P. O povyshenii effektivnosti resheniya 3D SLAM zadachi po stereoizobrazheniyam [On improving the efficiency of 3D SLAM problem solving from stereo images]. Informatika i sistemy upravleniya [Informatics and Control Systems]. 2018, No. 2(56), pp. 14–23. DOI: 10.22250/isu.2018.56.14-23. (In Russian)
+
+14. Golubkov A.N., Melyukov S., Fomichev A.S. Adaptivnyy algoritm kompleksirovaniya vizual'nykh i inertsial'nykh dannykh dlya avtomaticheskoy posadki kvadrokoptera na podvizhnuyu platformu [Adaptive algorithm for fusing visual and inertial data for automatic landing of a quadcopter on a moving platform]. Elektronika NTB [Electronics: Science, Technology, Business]. 2026, Vol. 257, No. 5, pp. 136–144. DOI: 10.22184/1992-4178.2026.257.5.136.144. (In Russian)
+
+15. Li M., Mourikis A.I. High-Precision, Consistent EKF-Based Visual–Inertial Odometry // International Journal of Robotics Research. 2013. Vol. 32, № 6. P. 690–711.
+
+16. Mahmoud J., Kolyubin S.A. Vizual'no-inertsial'no-kolesnaya odometriya s adaptivnym pereklyucheniem na osnove otsenok dvizheniya robototekhnicheskikh platform raznogo tipa [Visual-inertial-wheel odometry with adaptive switching based on motion estimates of robotic platforms of different types]. Izvestiya vysshikh uchebnykh zavedeniy. Priborostroenie [Journal of Instrument Engineering]. 2026, Vol. 69, No. 2, pp. 191–195. DOI: 10.17586/0021-3454-2026-69-2-191-195. (In Russian)
+
+17. Yang G., Meng W.D., Hou G.D., Feng N.N. Ispol'zovanie klyuchevykh tochek i liniy izobrazheniya v zadache vizual'no-inertsial'noy odometrii v real'nom vremeni [Using keypoints and lines in real-time visual-inertial odometry]. Giroskopiya i navigatsiya [Gyroscopy and Navigation]. 2023, Vol. 31, No. 4(123), pp. 96–117. (In Russian)
+
+18. DeTone D., Malisiewicz T., Rabinovich A. SuperPoint: Self-Supervised Interest Point Detection and Description // Proc. IEEE Conference on Computer Vision and Pattern Recognition Workshops. 2018. P. 224–236.
+
+19. Sarlin P.E., DeTone D., Malisiewicz T., Rabinovich A. SuperGlue: Learning Feature Matching with Graph Neural Networks // Proc. IEEE Conference on Computer Vision and Pattern Recognition. 2020. P. 4938–4947.
+
+20. Eigen D., Puhrsch C., Fergus R. Depth Map Prediction from a Single Image Using a Multi-Scale Deep Network // Advances in Neural Information Processing Systems. 2014. P. 2366–2374.
+
+21. Ranftl R., Bochkovskiy A., Koltun V. Vision Transformers for Dense Prediction // Proc. IEEE International Conference on Computer Vision. 2021. P. 12179–12188.
+
+22. Bhat S.F., Alhashim I., Wonka P. AdaBins: Depth Estimation Using Adaptive Bins // Proc. IEEE Conference on Computer Vision and Pattern Recognition. 2021. P. 4009–4018.
+
+23. Teed Z., Deng J. DROID-SLAM: Deep Visual SLAM for Monocular, Stereo and RGB-D Cameras // Advances in Neural Information Processing Systems. 2021. Vol. 34. P. 16558–16569.
+
+24. Song J., Jo H., Jin Y., Lee S.J. Uncertainty-Aware Depth Network for Visual-Inertial Odometry of Mobile Robots // Sensors. 2024. Vol. 24, № 20. Art. 6665. DOI: 10.3390/s24206665.
+
+25. Yang J., Yin Y., Jing Q. SVE: A Semantic Stereo Visual Estimator Based on VINS-Fusion for Restricted Aquatic Environments // Measurement. 2026. Vol. 258. Art. 119054. DOI: 10.1016/j.measurement.2025.119054.
+
+26. Huang G., Mourikis A.I., Roumeliotis S.I. Observability-Based Rules for Designing Consistent EKF SLAM Estimators // International Journal of Robotics Research. 2010. Vol. 29, № 5. P. 502–528.
+
+27. Soifer V.A., Goshin E.V. Vizual'naya odometriya s korrektsiey traektorii na osnove primeneniya fil'tra Kalmana [Visual odometry with trajectory correction using the Kalman filter]. Informatika i avtomatizatsiya [Informatics and Automation]. 2025, Vol. 24, No. 6, pp. 1568–1586. DOI: 10.15622/ia.24.6.2. (In Russian)

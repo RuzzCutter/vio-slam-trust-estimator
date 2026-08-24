@@ -5,6 +5,7 @@ id: paper_main
 description: "EuRoC MH_04/MH_05 — clean + D1 (blur) + D3 (brightness)"
 
 eval: true
+repeats: 9
 # duration: null   # null = полный bag (после start-offset)
 
 advanced:

@@ -18,6 +18,10 @@ from typing import Any, Iterator
 ROOT = Path(__file__).resolve().parents[2]
 TRAJ_STATS = ROOT / "scripts" / "traj_stats.py"
 
+GAP_FAIL_S = 0.5
+COORD_FAIL_M = 50.0
+PAIR_TTEST_MIN_N = 5
+
 DIR_RE = re.compile(
     r"^(?P<seq>.+)_(?P<mode>baseline|adaptive)"
     r"(?P<ablate_tags>(?:_nof[1-4])*)"
@@ -115,7 +119,7 @@ def _traj_stats(traj: Path) -> dict[str, Any]:
             k, v = token.split("=", 1)
             if k in ("poses", "diverged"):
                 stats[k] = int(float(v))
-            elif k.endswith("_m"):
+            elif k.endswith("_m") or k.endswith("_s"):
                 stats[k] = float(v)
     return stats
 
@@ -163,10 +167,32 @@ class RunRecord:
     init_ok: bool = False
     ablate: str = ""
     ablate_variant: str = "full"
+    max_gap_s: float | None = None
+    max_coord_m: float | None = None
+    repeat: int = 0
+
+    @property
+    def protocol_failure(self) -> bool:
+        """Init fail, gap > 0.5 s, |coord| > 50 m, or no evo metrics."""
+        if not self.init_ok or self.poses < 2:
+            return True
+        if self.diverged:
+            return True
+        if self.max_coord_m is not None and self.max_coord_m > COORD_FAIL_M:
+            return True
+        if self.max_gap_s is not None and self.max_gap_s > GAP_FAIL_S:
+            return True
+        if self.ape_rmse_m is None:
+            return True
+        return False
 
     @property
     def tracking_failure(self) -> bool:
-        return self.diverged or self.poses < 2 or not self.init_ok
+        return self.protocol_failure
+
+    @property
+    def is_success(self) -> bool:
+        return not self.protocol_failure and self.ape_rmse_m is not None
 
 
 @dataclass
@@ -178,7 +204,9 @@ class CompareRecord:
     adaptive: RunRecord | None = None
     batch_id: str = ""
     run_index: int = 0
+    repeat: int = 0
     finished_at: str = ""
+    status: str = "ok"
 
     def delta_ape_pct(self) -> float | None:
         b, a = self.baseline, self.adaptive
@@ -250,6 +278,9 @@ def load_run_record(result_dir: Path | str) -> RunRecord:
             init_ok=bool(meta.get("init_ok", False)),
             ablate=str(meta.get("ablate", "") or ""),
             ablate_variant=str(meta.get("ablate_variant") or ablate_spec_to_variant(meta.get("ablate", ""))),
+            max_gap_s=_parse_float(str(meta.get("max_gap_s"))) if meta.get("max_gap_s") is not None else None,
+            max_coord_m=_parse_float(str(meta.get("max_coord_m"))) if meta.get("max_coord_m") is not None else None,
+            repeat=int(meta.get("repeat", 0) or 0),
         )
         return rec
 
@@ -293,6 +324,8 @@ def load_run_record(result_dir: Path | str) -> RunRecord:
         init_ok=init_ok,
         ablate=parsed.get("ablate", ""),
         ablate_variant=parsed.get("ablate_variant", "full"),
+        max_gap_s=stats.get("max_gap_s"),
+        max_coord_m=stats.get("max_coord_m"),
     )
     return rec
 
@@ -333,6 +366,9 @@ def write_run_meta(
         "trust_rows": rec.trust_rows,
         "has_gt": rec.has_gt,
         "init_ok": rec.init_ok,
+        "max_gap_s": rec.max_gap_s,
+        "max_coord_m": rec.max_coord_m,
+        "protocol_failure": rec.protocol_failure,
         "written_at": datetime.now().isoformat(timespec="seconds"),
     }
     ts = parse_result_dirname(out_dir.name)
@@ -412,15 +448,21 @@ def load_batch_manifest(batch_dir: Path) -> list[CompareRecord]:
         row = json.loads(line)
         baseline_dir = row.get("baseline_dir")
         adaptive_dir = row.get("adaptive_dir")
-        if not baseline_dir or not adaptive_dir:
-            continue
+        baseline = load_run_record(baseline_dir) if baseline_dir else None
+        adaptive = load_run_record(adaptive_dir) if adaptive_dir else None
+        degrade = row.get("degrade") or (baseline.degrade if baseline else "") or (adaptive.degrade if adaptive else "")
         records.append(
-            compare_from_dirs(
-                baseline_dir,
-                adaptive_dir,
+            CompareRecord(
+                seq=row.get("seq") or (baseline.seq if baseline else "") or (adaptive.seq if adaptive else ""),
+                degrade=degrade,
+                degrade_label=row.get("degrade_label") or degrade_spec_to_label(degrade),
+                baseline=baseline,
+                adaptive=adaptive,
                 batch_id=batch_dir.name,
-                run_index=int(row.get("index", 0)),
+                run_index=int(row.get("index", 0) or 0),
+                repeat=int(row.get("repeat", 0) or 0),
                 finished_at=row.get("finished_at", ""),
+                status=str(row.get("status") or "ok"),
             )
         )
     return records
@@ -548,16 +590,42 @@ def split_clean_degraded(rows: list[CompareRecord]) -> tuple[list[CompareRecord]
     return clean, degraded
 
 
+def median_value(values: list[float]) -> float:
+    ordered = sorted(values)
+    n = len(ordered)
+    if n == 0:
+        raise ValueError("median of empty list")
+    mid = n // 2
+    if n % 2:
+        return float(ordered[mid])
+    return 0.5 * (float(ordered[mid - 1]) + float(ordered[mid]))
+
+
 @dataclass
 class AblationGroup:
     seq: str
     degrade: str = ""
     degrade_label: str = "clean"
-    variants: dict[str, RunRecord] = field(default_factory=dict)
+    variants: dict[str, list[RunRecord]] = field(default_factory=dict)
+    full_source: str = "ablation"
+
+    def _runs(self, variant: str) -> list[RunRecord]:
+        return list(self.variants.get(variant) or [])
+
+    def successful(self, variant: str) -> list[RunRecord]:
+        return [r for r in self._runs(variant) if r.is_success]
+
+    def median_ape(self, variant: str) -> float | None:
+        vals = [r.ape_rmse_m for r in self.successful(variant) if r.ape_rmse_m is not None]
+        if not vals:
+            return None
+        return float(median_value(vals))
+
+    def n_success(self, variant: str) -> int:
+        return len(self.successful(variant))
 
     def full_ape(self) -> float | None:
-        full = self.variants.get("full")
-        return full.ape_rmse_m if full else None
+        return self.median_ape("full")
 
 
 def load_ablation_manifest(batch_dir: Path) -> list[AblationGroup]:
@@ -571,7 +639,7 @@ def load_ablation_manifest(batch_dir: Path) -> list[AblationGroup]:
             continue
         row = json.loads(line)
         adaptive_dir = row.get("adaptive_dir") or row.get("result_dir")
-        if not adaptive_dir or row.get("status") != "ok":
+        if not adaptive_dir:
             continue
         seq = row.get("seq", "")
         degrade = row.get("degrade") or ""
@@ -584,7 +652,7 @@ def load_ablation_manifest(batch_dir: Path) -> list[AblationGroup]:
             )
         rec = load_run_record(adaptive_dir)
         variant = row.get("ablate_variant") or ablate_spec_to_variant(row.get("ablate", ""))
-        groups[key].variants[variant] = rec
+        groups[key].variants.setdefault(variant, []).append(rec)
     return list(groups.values())
 
 
@@ -603,7 +671,7 @@ def scan_ablation_results(results_root: Path) -> list[AblationGroup]:
                 degrade=rec.degrade,
                 degrade_label=rec.degrade_label,
             )
-        groups[key].variants[rec.ablate_variant] = rec
+        groups[key].variants.setdefault(rec.ablate_variant, []).append(rec)
     return [g for g in groups.values() if len(g.variants) > 1 or "full" in g.variants]
 
 
@@ -616,10 +684,14 @@ def render_ablation_markdown(groups: list[AblationGroup], *, title: str = "Ablat
         cells: list[str] = []
         full_ape = group.full_ape()
         worst_delta = None
+        n_full = group.n_success("full")
         for variant in ABLATION_VARIANTS:
-            rec = group.variants.get(variant)
-            ape = rec.ape_rmse_m if rec and not rec.diverged else None
-            cells.append(fmt_m(ape))
+            ape = group.median_ape(variant)
+            n_var = group.n_success(variant)
+            if variant == "full":
+                cells.append(f"{fmt_m(ape)} (n={n_full})")
+            else:
+                cells.append(fmt_m(ape) if n_var else "—")
             if variant != "full" and ape is not None and full_ape is not None:
                 delta = (ape / full_ape - 1.0) * 100.0 if full_ape > 0 else None
                 if delta is not None and (worst_delta is None or delta > worst_delta):
@@ -638,21 +710,33 @@ def render_ablation_csv(groups: list[AblationGroup]) -> str:
 
     out = io.StringIO()
     writer = csv.writer(out)
-    writer.writerow(["seq", "degrade", "degrade_label", "variant", "ape_rmse_m", "rpe_rmse_m", "c_mean", "result_dir"])
+    writer.writerow([
+        "seq", "degrade", "degrade_label", "variant",
+        "n_launch", "n_success", "median_ape_m", "mean_ape_m", "std_ape_m",
+        "full_source", "result_dir",
+    ])
     for group in sorted(groups, key=lambda g: (g.seq, g.degrade)):
         for variant in ABLATION_VARIANTS:
-            rec = group.variants.get(variant)
-            if not rec:
-                continue
+            runs = group.variants.get(variant) or []
+            ok = group.successful(variant)
+            apes = [r.ape_rmse_m for r in ok if r.ape_rmse_m is not None]
+            mean = sum(apes) / len(apes) if apes else None
+            std = None
+            if len(apes) >= 2:
+                m = mean if mean is not None else 0.0
+                std = (sum((x - m) ** 2 for x in apes) / (len(apes) - 1)) ** 0.5
             writer.writerow([
                 group.seq,
                 group.degrade,
                 group.degrade_label,
                 variant,
-                rec.ape_rmse_m if rec.ape_rmse_m is not None else "",
-                rec.rpe_rmse_m if rec.rpe_rmse_m is not None else "",
-                rec.c_mean if rec.c_mean is not None else "",
-                rec.result_dir,
+                len(runs),
+                len(ok),
+                group.median_ape(variant) if apes else "",
+                mean if mean is not None else "",
+                std if std is not None else "",
+                group.full_source if variant == "full" else "",
+                ok[0].result_dir if ok else "",
             ])
     return out.getvalue()
 

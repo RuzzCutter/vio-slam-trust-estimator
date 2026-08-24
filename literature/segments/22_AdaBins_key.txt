@@ -1,0 +1,8 @@
+# Segment from 22_AdaBins.pdf
+# Source: literature/pdf/22_AdaBins.pdf (CVPR 2021; arXiv:2011.14141)
+# Перезалит 2026-08-19: предыдущий файл был чужой статьёй arXiv:2011.14157 (21cm cosmology).
+
+ABSTRACT
+We address the problem of estimating a high quality dense depth map from a single RGB input image. We start out with a baseline encoder-decoder convolutional neural network architecture and pose the question of how the global processing of information can help improve overall depth estimation. To this end, we propose a transformer-based architecture block that divides the depth range into bins whose center value is estimated adaptively per image. The final depth values are estimated as linear combinations of the bin centers. We call our new building block AdaBins. Our results show a decisive improvement over the state-of-the-art on several popular depth datasets across all metrics. We also validate the effectiveness of the proposed block with an ablation study and provide the code and corresponding pre-trained weights of the new state-of-the-art model.
+
+Библиография (статья [22]): Bhat S.F., Alhashim I., Wonka P. AdaBins: Depth Estimation Using Adaptive Bins // Proc. IEEE Conference on Computer Vision and Pattern Recognition. 2021. P. 4009–4018.

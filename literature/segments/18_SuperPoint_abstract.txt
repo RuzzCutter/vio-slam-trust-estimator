@@ -1,5 +1,5 @@
-# Segment from 10_SuperPoint.pdf
-# Source: literature/pdf/10_SuperPoint.pdf
+# Segment from 18_SuperPoint.pdf
+# Source: literature/pdf/18_SuperPoint.pdf
 # Auto-extracted for citation; verify page numbers in original PDF.
 
 ABSTRACT
