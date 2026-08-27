@@ -1,0 +1,22 @@
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{llccccccc}
+\hline
+Seq & Cond. & n & ATE$_b$ & ATE$_a$ & $\Delta$ATE & $p$ & $\bar{c}$ & Fail \\
+\hline
+MH\_04\_difficult & clean & 9/9 & 0.429±0.194 & 0.368±0.098 & +4.8% & 0.478 & 0.650 & 0/9 \\
+MH\_04\_difficult & D3 bright +40% & 8/9 & 0.397±0.197 & 0.606±0.305 & +44.4% & 0.198 & 0.647 & 1/9 \\
+MH\_04\_difficult & D3 bright +60% & 9/9 & 0.904±0.675 & 0.876±0.454 & +82.9% & 0.939 & 0.643 & 0/9 \\
+MH\_04\_difficult & D1 blur σ=5 & 9/9 & 0.898±0.659 & 0.585±0.146 & +1.4% & 0.206 & 0.641 & 0/9 \\
+MH\_04\_difficult & D1 blur σ=9 & 0/9 & — & — & — & — & — & 9/9 \\
+MH\_05\_difficult & clean & 9/9 & 0.991±1.104 & 0.933±1.485 & -14.4% & 0.934 & 0.657 & 0/9 \\
+MH\_05\_difficult & D3 bright +40% & 9/9 & 0.350±0.133 & 0.320±0.081 & -1.4% & 0.592 & 0.662 & 0/9 \\
+MH\_05\_difficult & D3 bright +60% & 9/9 & 0.377±0.114 & 0.663±0.888 & +8.6% & 0.383 & 0.660 & 0/9 \\
+MH\_05\_difficult & D1 blur σ=5 & 9/9 & 0.627±0.221 & 1.136±0.786 & +29.5% & 0.106 & 0.646 & 0/9 \\
+MH\_05\_difficult & D1 blur σ=9 & 0/9 & — & — & — & — & — & 9/9 \\
+\hline
+\end{tabular}
+\caption{EuRoC: baseline vs adaptive (repeats)}
+\label{tab:ate_repeats}
+\end{table}

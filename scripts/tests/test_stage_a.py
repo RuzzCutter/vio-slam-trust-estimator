@@ -88,6 +88,16 @@ class TestExpandJobs(unittest.TestCase):
         jobs = run_batch.expand_jobs(plan, repeats=2)
         self.assertEqual(len(jobs), 20)
 
+    def test_select_compare_dirs_uses_retry(self) -> None:
+        dirs = [
+            "/tmp/MH_01_easy_baseline_20260825_092934",
+            "/tmp/MH_01_easy_adaptive_20260825_093056",
+            "/tmp/MH_01_easy_adaptive_20260825_093056_retry2",
+        ]
+        base, adapt = run_batch.select_compare_dirs(dirs)
+        self.assertTrue(base and base.endswith("092934"))
+        self.assertTrue(adapt and adapt.endswith("_retry2"))
+
 
 class TestProtocolAndStats(unittest.TestCase):
     def test_gap_is_protocol_fail(self) -> None:

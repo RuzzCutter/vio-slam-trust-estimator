@@ -92,8 +92,18 @@ def _parse_result_dirs(stdout: str) -> list[str]:
     for line in stdout.splitlines():
         m = re.match(r"RESULT_DIR=(.+)", line.strip())
         if m:
-            dirs.append(m.group(1))
+            dirs.append(m.group(1).strip())
     return dirs
+
+
+def select_compare_dirs(dirs: list[str]) -> tuple[str | None, str | None]:
+    """Last baseline/adaptive RESULT_DIR (retries append extra lines; take the recovered run)."""
+    baselines = [d for d in dirs if "_baseline_" in Path(d).name]
+    adaptives = [d for d in dirs if "_adaptive_" in Path(d).name]
+    return (
+        baselines[-1] if baselines else None,
+        adaptives[-1] if adaptives else None,
+    )
 
 
 def run_compare_cell(
@@ -125,9 +135,8 @@ def run_compare_cell(
     proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(ROOT))
     combined = (proc.stdout or "") + (proc.stderr or "")
     log_lines.append(combined)
-    dirs = _parse_result_dirs(proc.stdout or "")
-    baseline_dir = dirs[0] if len(dirs) >= 1 else None
-    adaptive_dir = dirs[1] if len(dirs) >= 2 else None
+    dirs = _parse_result_dirs((proc.stdout or "") + "\n" + (proc.stderr or ""))
+    baseline_dir, adaptive_dir = select_compare_dirs(dirs)
     return proc.returncode, baseline_dir, adaptive_dir, "\n".join(log_lines)
 
 
@@ -165,7 +174,7 @@ def run_adaptive_cell(
     proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(ROOT))
     combined = (proc.stdout or "") + (proc.stderr or "")
     log_lines.append(combined)
-    dirs = _parse_result_dirs(proc.stdout or "")
+    dirs = _parse_result_dirs((proc.stdout or "") + "\n" + (proc.stderr or ""))
     return proc.returncode, (dirs[-1] if dirs else None), "\n".join(log_lines)
 
 
