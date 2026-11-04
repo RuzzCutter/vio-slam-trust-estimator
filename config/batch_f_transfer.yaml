@@ -1,0 +1,21 @@
+# F-KITTI / F-TUM-VI: 1 seq × clean + D1 σ=5, n=7. После зелёного E3 и smoke 1+1.
+# python3 scripts/run_batch.py --plan config/batch_f_transfer.yaml
+
+id: f_transfer
+kind: compare
+description: "F transfer: TUM-VI room1 + KITTI raw+IMU, clean + D1 σ=5"
+
+eval: true
+repeats: 7
+
+advanced:
+  retries: 3
+  trust_tau: 5.0
+
+runs:
+  - seq: tumvi_room1
+  - seq: tumvi_room1
+    degrade: gaussian:5
+  - seq: kitti_2011_09_26_drive_0009
+  - seq: kitti_2011_09_26_drive_0009
+    degrade: gaussian:5

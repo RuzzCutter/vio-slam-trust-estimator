@@ -14,12 +14,14 @@ ws_vins/log/
 # Datasets and experiment outputs
 datasets/
 results/
+paper_tables/
 *.bag
 *.db3
 
 # evo / ROS
 .evo/
 .ros/
+.ros_home/
 
 # Editor / OS
 .idea/

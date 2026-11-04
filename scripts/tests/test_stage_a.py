@@ -25,7 +25,10 @@ from repeat_stats import (  # noqa: E402
     PAIR_TTEST_MIN_N,
     aggregate_compare,
     attach_compare_full,
+    bootstrap_mean_diff_ci,
+    ci_contains_zero,
     paired_ttest_p,
+    wilcoxon_signed_rank_p,
 )
 from run_results import (  # noqa: E402
     AblationGroup,
@@ -155,7 +158,31 @@ class TestProtocolAndStats(unittest.TestCase):
         a = [1.0, 1.1, 1.2, 1.3]
         b = [0.9, 1.0, 1.1, 1.2]
         self.assertIsNone(paired_ttest_p(a, b))
+        self.assertIsNone(wilcoxon_signed_rank_p(a, b))
+        self.assertIsNone(bootstrap_mean_diff_ci(a, b))
         self.assertGreaterEqual(PAIR_TTEST_MIN_N, 5)
+
+    def test_wilcoxon_and_bootstrap_clear_shift(self) -> None:
+        base = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6]
+        adapt = [0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80]
+        p_w = wilcoxon_signed_rank_p(base, adapt)
+        self.assertIsNotNone(p_w)
+        self.assertLess(p_w or 1.0, 0.05)
+        ci = bootstrap_mean_diff_ci(base, adapt)
+        self.assertIsNotNone(ci)
+        assert ci is not None
+        lo, hi, mean_d = ci
+        self.assertLess(hi, 0.0)
+        self.assertLess(mean_d, 0.0)
+        self.assertFalse(ci_contains_zero(ci))
+        self.assertLess(lo, hi)
+
+    def test_bootstrap_ci_includes_zero_when_no_shift(self) -> None:
+        base = [0.40, 0.55, 0.38, 0.62, 0.51, 0.44, 0.58]
+        adapt = [0.41, 0.53, 0.40, 0.60, 0.50, 0.46, 0.57]
+        ci = bootstrap_mean_diff_ci(base, adapt)
+        self.assertIsNotNone(ci)
+        self.assertTrue(ci_contains_zero(ci))
 
 
 class TestAblationFullFromCompare(unittest.TestCase):
@@ -273,6 +300,108 @@ class TestManifestLoad(unittest.TestCase):
             self.assertEqual(len(rows), 1)
             self.assertEqual(rows[0].status, "failed")
             self.assertIsNone(rows[0].baseline)
+
+
+class TestSummarizeTrustMedians(unittest.TestCase):
+    def test_median_c_and_noise_scale(self) -> None:
+        from summarize_trust import summarize_trust_log
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "trust_log.csv"
+            with path.open("w", encoding="utf-8", newline="") as fh:
+                w = csv.writer(fh)
+                w.writerow(
+                    [
+                        "timestamp",
+                        "f1",
+                        "f2",
+                        "f3",
+                        "f4",
+                        "c",
+                        "n_features",
+                        "n_inliers",
+                        "e_repr",
+                        "tr_pose",
+                        "skip_update",
+                        "noise_scale",
+                    ]
+                )
+                for i, (c, s, skip) in enumerate(
+                    ((0.4, 1.0, 0), (0.5, 1.2, 0), (0.9, 2.0, 1)),
+                    start=1,
+                ):
+                    w.writerow([i, 0.5, 0.5, 0.5, 0.5, c, 10, 8, 0.1, 0.01, skip, s])
+            d = summarize_trust_log(path)
+            self.assertEqual(d["n"], 3)
+            self.assertAlmostEqual(d["c_p50"] or 0, 0.5)
+            self.assertAlmostEqual(d["noise_scale_p50"] or 0, 1.2)
+            self.assertAlmostEqual(d["skip_frac"] or 0, 1 / 3)
+
+
+class TestStaleWindow(unittest.TestCase):
+    def test_period_10_window_2(self) -> None:
+        from degrade_ros2_bag import stale_in_window
+
+        t0 = 100.0
+        self.assertTrue(stale_in_window(100.0, t0, 2.0))
+        self.assertTrue(stale_in_window(101.9, t0, 2.0))
+        self.assertFalse(stale_in_window(102.0, t0, 2.0))
+        self.assertTrue(stale_in_window(110.5, t0, 2.0))
+        self.assertFalse(stale_in_window(115.0, t0, 2.0))
+
+    def test_after_30_first_window(self) -> None:
+        from degrade_ros2_bag import parse_degrade_spec, stale_in_window
+
+        dtype, level, after_s = parse_degrade_spec("stale:1:after=30")
+        self.assertEqual(dtype, "stale")
+        self.assertEqual(level, 1.0)
+        self.assertEqual(after_s, 30.0)
+        t0 = 100.0
+        self.assertFalse(stale_in_window(129.9, t0, 1.0, after_s=30.0))
+        self.assertTrue(stale_in_window(130.5, t0, 1.0, after_s=30.0))
+        self.assertFalse(stale_in_window(131.0, t0, 1.0, after_s=30.0))
+        self.assertTrue(stale_in_window(140.2, t0, 1.0, after_s=30.0))
+
+    def test_degrade_tag_after(self) -> None:
+        from run_results import DIR_RE, degrade_tag_to_spec
+
+        name = "MH_04_difficult_baseline_stale_1_after_30_20260910_120000"
+        m = DIR_RE.match(name)
+        self.assertIsNotNone(m)
+        self.assertEqual(m.group("degrade_tag"), "stale_1_after_30")
+        self.assertEqual(degrade_tag_to_spec("stale_1_after_30"), "stale:1:after=30")
+        self.assertEqual(degrade_tag_to_spec("lag_0p5"), "lag:0.5")
+
+    def test_imu_vis_window_split(self) -> None:
+        from summarize_imu_vis import summarize_imu_vis
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "imu_vis.csv"
+            with path.open("w", encoding="utf-8", newline="") as fh:
+                w = csv.writer(fh)
+                w.writerow(["timestamp", "d", "dR_rad", "flow_med_px", "n_tracks", "skip"])
+                w.writerow([100.5, 0.8, 0.1, 0.1, 10, 0])
+                w.writerow([105.0, 0.1, 0.1, 1.0, 10, 0])
+            d = summarize_imu_vis(path, bag_t0=100.0, stale_w=2.0)
+            self.assertEqual(d["n"], 2)
+            self.assertAlmostEqual(d["d_win_p50"] or 0, 0.8)
+            self.assertAlmostEqual(d["d_live_p50"] or 0, 0.1)
+
+
+class TestB2WilcoxonSmoke(unittest.TestCase):
+    """Old B2 (non-reactive c(t)): bootstrap CI of mean ΔATE should contain 0."""
+
+    B2 = ROOT / "datasets/results/batches/paper_main_20260825_101657"
+
+    def test_b2_ci_contains_zero_on_mh04_d1(self) -> None:
+        if not (self.B2 / "manifest.jsonl").is_file():
+            self.skipTest("B2 batch not on disk")
+        rows = load_batch_manifest(self.B2)
+        cells = [c for c in aggregate_compare(rows) if c.seq == "MH_04_difficult" and c.degrade == "gaussian:5"]
+        self.assertTrue(cells, "MH_04 D1 σ=5 missing from B2")
+        ci = cells[0].bootstrap_mean_diff_ci()
+        self.assertIsNotNone(ci)
+        self.assertTrue(ci_contains_zero(ci), f"unexpected CI {ci}")
 
 
 if __name__ == "__main__":

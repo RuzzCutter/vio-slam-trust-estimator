@@ -313,7 +313,7 @@ def _plot_map(
         interpolation="bilinear",
     )
     cb = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    cb.set_label("C(x, y) — trust")
+    cb.set_label("C(x, y) – trust")
 
     tx = traj["x"].to_numpy()
     ty = traj["y"].to_numpy()
@@ -356,7 +356,7 @@ def _plot_along_path(result: dict[str, Any], *, out_png: Path, title: str) -> No
     axes[0].set_ylabel("c(t)")
     axes[0].set_xlabel("time since start [s]")
     axes[0].set_ylim(0, 1.05)
-    axes[0].set_title(f"{title} — c(t) along run")
+    axes[0].set_title(f"{title} – c(t) along run")
     axes[0].grid(True, alpha=0.3)
     axes[0].legend(loc="lower right", fontsize=8)
 
@@ -417,7 +417,7 @@ def run_build(
     path_png = out_dir / "trust_along_path.png"
     plot_title = title or trust_path.parent.name
 
-    _plot_map(result, out_png=map_png, c_threshold=c_threshold, title=f"Trust map — {plot_title}")
+    _plot_map(result, out_png=map_png, c_threshold=c_threshold, title=f"Trust map – {plot_title}")
     _plot_along_path(result, out_png=path_png, title=plot_title)
 
     np.savez_compressed(

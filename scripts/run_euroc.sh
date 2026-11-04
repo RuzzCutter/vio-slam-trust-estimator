@@ -146,7 +146,7 @@ if [[ -n "${ABLATE}" ]]; then
   done
 fi
 if [[ -n "${DEGRADE}" ]]; then
-  TAG="${TAG}_$(echo "${DEGRADE}" | tr ':' '_')"
+  TAG="${TAG}_$(echo "${DEGRADE}" | tr ':=.' '__p')"
 fi
 OUT_DIR_BASE="${DATA_ROOT}/results/${SEQ}_${TAG}_$(date +%Y%m%d_%H%M%S)"
 OUT_DIR="${OUT_DIR_BASE}"
@@ -157,11 +157,17 @@ TRUST_LOG="${OUT_DIR}/trust_log.csv"
 
 if [[ "${MODE}" == "baseline" ]]; then
   LAUNCH_FILE="$(aspiranture_root)/launch/euroc_baseline.launch.py"
+  OV_CFG="$(euroc_registry_query "${SEQ}" openvins_config)"
+  OV_CFG="${OV_CFG:-euroc_mav}"
+  CONFIG_NAME_ARG="config:=${OV_CFG}"
   CONFIG_PATH_ARG=""
   MODE_LABEL="Baseline (классический OpenVINS, фиксированный шум измерений)"
 else
   LAUNCH_FILE="$(aspiranture_root)/launch/euroc_adaptive.launch.py"
-  RUN_CONFIG="$(euroc_prepare_adaptive_config "${OUT_DIR}" "${TRUST_LOG}" "${TRUST_TAU}" "${ABLATE}")"
+  RUN_CONFIG="$(euroc_prepare_adaptive_config "${OUT_DIR}" "${TRUST_LOG}" "${TRUST_TAU}" "${ABLATE}" "${SEQ}")"
+  OV_CFG="$(euroc_registry_query "${SEQ}" openvins_config_trust)"
+  OV_CFG="${OV_CFG:-euroc_mav_trust}"
+  CONFIG_NAME_ARG="config:=${OV_CFG}"
   CONFIG_PATH_ARG="config_path:=${RUN_CONFIG}"
   MODE_LABEL="Adaptive (OpenVINS + trust_estimator, адаптивная ковариация)"
   if [[ -n "${ABLATE}" ]]; then
@@ -234,7 +240,7 @@ launch_openvins() {
   ${VERBOSE} && demo_step 1 3 "Запуск OpenVINS${viz_label}..."
   : > "${OUT_DIR}/openvins.log"
   # shellcheck disable=SC2086
-  ros2 launch "${LAUNCH_FILE}" ${RVIZ_ARG} ${CONFIG_PATH_ARG} >> "${OUT_DIR}/openvins.log" 2>&1 &
+  ros2 launch "${LAUNCH_FILE}" ${RVIZ_ARG} ${CONFIG_NAME_ARG} ${CONFIG_PATH_ARG} >> "${OUT_DIR}/openvins.log" 2>&1 &
   LAUNCH_PID=$!
   if ! euroc_wait_openvins_ready "${OUT_DIR}/openvins.log" 30; then
     demo_warn "OpenVINS не подписался на топики за 30 с — продолжаем"
@@ -265,19 +271,23 @@ play_bag() {
   fi
   BAG_PID=$!
 
-  ${VERBOSE} && echo "  ожидание инициализации VIO..."
-  if euroc_wait_vio_init "${OUT_DIR}/openvins.log" 45; then
-    ${VERBOSE} && demo_ok "Инициализация VIO — запись траектории"
-    sleep 3
-  else
-    demo_warn "Init не подтверждён за 45 с — запись с текущего момента"
-  fi
-
+  # Record from the first published pose. Waiting for init before the
+  # recorder drops short bags (KITTI ~45 s) because the 45 s init timeout
+  # consumes the whole playback.
   REC_PID="$(euroc_start_recorder "${TRAJ_FILE}")"
   ${VERBOSE} && demo_ok "Recorder запущен (pid ${REC_PID})"
 
+  ${VERBOSE} && echo "  ожидание инициализации VIO..."
+  if euroc_wait_vio_init "${OUT_DIR}/openvins.log" 45; then
+    ${VERBOSE} && demo_ok "Инициализация VIO"
+  else
+    demo_warn "Init не подтверждён за 45 с"
+  fi
+
   wait "${BAG_PID}" 2>/dev/null || true
   BAG_PID=""
+  # Short bags (KITTI ~45 s) still have in-flight poseimu at play-end.
+  sleep 2
   demo_reset
   ${VERBOSE} && demo_ok "Bag воспроизведён"
 }
@@ -340,7 +350,7 @@ while [[ "${attempt}" -le "${MAX_RETRIES}" ]]; do
     TRAJ_FILE="${OUT_DIR}/trajectory_tum.txt"
     TRUST_LOG="${OUT_DIR}/trust_log.csv"
     if [[ "${MODE}" == "adaptive" ]]; then
-      RUN_CONFIG="$(euroc_prepare_adaptive_config "${OUT_DIR}" "${TRUST_LOG}" "${TRUST_TAU}" "${ABLATE}")"
+      RUN_CONFIG="$(euroc_prepare_adaptive_config "${OUT_DIR}" "${TRUST_LOG}" "${TRUST_TAU}" "${ABLATE}" "${SEQ}")"
       CONFIG_PATH_ARG="config_path:=${RUN_CONFIG}"
     fi
     demo_warn "Повтор ${attempt}/${MAX_RETRIES} — предыдущий прогон расходился"

@@ -1,0 +1,18 @@
+# v10 G2 — not run: L-stale failed on frozen W=7 (no init / no imu_vis).
+# python3 scripts/run_batch.py --plan config/batch_v10_g2.yaml
+
+id: v10_g2
+kind: compare
+description: "G2: tumvi_room1 clean+stale:2 n=3 — lock-hold gates before F"
+
+eval: true
+repeats: 3
+
+advanced:
+  retries: 1
+  trust_tau: 5.0
+
+runs:
+  - seq: tumvi_room1
+  - seq: tumvi_room1
+    degrade: stale:2

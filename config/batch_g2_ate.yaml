@@ -1,0 +1,18 @@
+# G2 ATE-smoke after G. MH_04 only, n=3 pairs clean + D1 σ=5.
+# python3 scripts/run_batch.py --plan config/batch_g2_ate.yaml
+
+id: g2_ate
+kind: compare
+description: "G2: MH_04 clean+D1 n=3 pairs — ATE gates before F2"
+
+eval: true
+repeats: 3
+
+advanced:
+  retries: 3
+  trust_tau: 5.0
+
+runs:
+  - seq: MH_04_difficult
+  - seq: MH_04_difficult
+    degrade: gaussian:5

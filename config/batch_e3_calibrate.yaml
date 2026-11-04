@@ -1,0 +1,19 @@
+# E3: калибровка c(t) только MH_04. Adaptive-only (не ATE).
+# Приёмка: c̄(D1) ≤ c̄(clean) − 0,05 (или спад ≥ 10 %).
+# Запуск: python3 scripts/run_batch.py --plan config/batch_e3_calibrate.yaml
+
+id: e3_mh04_c
+kind: ablation
+description: "E3: MH_04 adaptive clean vs D1 σ=5 — сдвиг c̄, не крутить τ по ATE"
+
+eval: true
+repeats: 3
+
+advanced:
+  retries: 3
+  trust_tau: 5.0
+
+runs:
+  - seq: MH_04_difficult
+  - seq: MH_04_difficult
+    degrade: gaussian:5

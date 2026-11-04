@@ -1,0 +1,27 @@
+# F-ablation: MH_04 D1 σ=5 × w/o f1..f4, n=5. full — из F-EuRoC compare.
+# python3 scripts/run_batch.py --plan config/batch_f_ablation.yaml
+
+id: f_ablation
+kind: ablation
+description: "F-ablation MH_04 D1 σ=5 w/o f1–f4"
+
+eval: true
+repeats: 5
+
+advanced:
+  retries: 3
+  trust_tau: 5.0
+
+runs:
+  - seq: MH_04_difficult
+    degrade: gaussian:5
+    ablate: f1
+  - seq: MH_04_difficult
+    degrade: gaussian:5
+    ablate: f2
+  - seq: MH_04_difficult
+    degrade: gaussian:5
+    ablate: f3
+  - seq: MH_04_difficult
+    degrade: gaussian:5
+    ablate: f4

@@ -51,7 +51,9 @@ def _detect_kind(batch_dir: Path) -> str:
     manifest = batch_dir / "manifest.jsonl"
     if manifest.is_file():
         first = manifest.read_text(encoding="utf-8").splitlines()[0]
-        if '"kind": "ablation"' in first or '"ablate"' in first:
+        if '"kind": "ablation"' in first:
+            return "ablation"
+        if '"ablate": "' in first and '"ablate": ""' not in first:
             return "ablation"
     return "compare"
 

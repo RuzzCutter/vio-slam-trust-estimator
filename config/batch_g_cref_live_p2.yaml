@@ -1,0 +1,18 @@
+# G live retry: one step p=2 after G-D1 fail at p=1. Same c_ref.
+# python3 scripts/run_batch.py --plan config/batch_g_cref_live_p2.yaml
+
+id: g_cref_live_p2
+kind: ablation
+description: "G retry p=2: MH_04 adaptive clean+D1"
+
+eval: false
+repeats: 2
+
+advanced:
+  retries: 3
+  trust_tau: 5.0
+
+runs:
+  - seq: MH_04_difficult
+  - seq: MH_04_difficult
+    degrade: gaussian:5

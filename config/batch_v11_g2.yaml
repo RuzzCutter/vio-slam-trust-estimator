@@ -1,0 +1,18 @@
+# v11 G2 after green L+K. MH_04 clean + stale:4:after=30, n=3.
+# python3 scripts/run_batch.py --plan config/batch_v11_g2.yaml
+
+id: v11_g2
+kind: compare
+description: "G2: MH_04 clean+stale:4:after=30 n=3 — lock-hold after init"
+
+eval: true
+repeats: 3
+
+advanced:
+  retries: 1
+  trust_tau: 5.0
+
+runs:
+  - seq: MH_04_difficult
+  - seq: MH_04_difficult
+    degrade: stale:4:after=30

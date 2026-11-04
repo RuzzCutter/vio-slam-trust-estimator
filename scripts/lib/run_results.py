@@ -19,13 +19,13 @@ ROOT = Path(__file__).resolve().parents[2]
 TRAJ_STATS = ROOT / "scripts" / "traj_stats.py"
 
 GAP_FAIL_S = 0.5
-COORD_FAIL_M = 50.0
+COORD_FAIL_M = 2000.0
 PAIR_TTEST_MIN_N = 5
 
 DIR_RE = re.compile(
     r"^(?P<seq>.+)_(?P<mode>baseline|adaptive)"
     r"(?P<ablate_tags>(?:_nof[1-4])*)"
-    r"(?:_(?P<degrade_tag>gaussian_\d+|brightness_\d+))?"
+    r"(?:_(?P<degrade_tag>gaussian_\d+|brightness_\d+|stale_\d+_after_\d+|stale_\d+|lag_\d+p?\d*|motion_\d+))?"
     r"_(?P<ts>\d{8}_\d{6})(?:_retry(?P<retry>\d+))?$"
 )
 
@@ -39,6 +39,16 @@ def degrade_tag_to_spec(tag: str | None) -> str:
         return f"gaussian:{tag.split('_', 1)[1]}"
     if tag.startswith("brightness_"):
         return f"brightness:{tag.split('_', 1)[1]}"
+    if tag.startswith("stale_") and "_after_" in tag:
+        parts = tag.split("_")
+        return f"stale:{parts[1]}:after={parts[3]}"
+    if tag.startswith("stale_"):
+        return f"stale:{tag.split('_', 1)[1]}"
+    if tag.startswith("lag_"):
+        lvl = tag.split("_", 1)[1].replace("p", ".", 1)
+        return f"lag:{lvl}"
+    if tag.startswith("motion_"):
+        return f"motion:{tag.split('_', 1)[1]}"
     return tag.replace("_", ":")
 
 
@@ -126,9 +136,10 @@ def _traj_stats(traj: Path) -> dict[str, Any]:
 
 def _trust_summary(trust_log: Path) -> dict[str, float | None]:
     if not trust_log.is_file():
-        return {"c_mean": None, "trust_rows": 0}
-    rows = 0
-    c_sum = 0.0
+        return {"c_mean": None, "trust_rows": 0, "c_p10": None, "skip_frac": None, "n_features_mean": None}
+    c_vals: list[float] = []
+    n_feat: list[float] = []
+    n_skip = 0
     with trust_log.open(encoding="utf-8", newline="") as fh:
         reader = csv.DictReader(fh)
         for row in reader:
@@ -136,13 +147,29 @@ def _trust_summary(trust_log: Path) -> dict[str, float | None]:
             if c_val is None:
                 continue
             try:
-                c_sum += float(c_val)
-                rows += 1
+                c_vals.append(float(c_val))
             except ValueError:
                 continue
+            try:
+                n_feat.append(float(row.get("n_features") or 0))
+            except ValueError:
+                pass
+            skip_raw = row.get("skip_update") or "0"
+            try:
+                n_skip += int(float(skip_raw))
+            except ValueError:
+                pass
+    rows = len(c_vals)
+    if not rows:
+        return {"c_mean": None, "trust_rows": 0, "c_p10": None, "skip_frac": None, "n_features_mean": None}
+    ordered = sorted(c_vals)
+    p10_idx = min(rows - 1, max(0, int(0.10 * (rows - 1))))
     return {
-        "c_mean": (c_sum / rows) if rows else None,
+        "c_mean": sum(c_vals) / rows,
         "trust_rows": rows,
+        "c_p10": ordered[p10_idx],
+        "skip_frac": n_skip / rows,
+        "n_features_mean": (sum(n_feat) / len(n_feat)) if n_feat else None,
     }
 
 
@@ -173,7 +200,7 @@ class RunRecord:
 
     @property
     def protocol_failure(self) -> bool:
-        """Init fail, gap > 0.5 s, |coord| > 50 m, or no evo metrics."""
+        """Init fail, gap > 0.5 s, |coord| > 2000 m, or no evo metrics."""
         if not self.init_ok or self.poses < 2:
             return True
         if self.diverged:

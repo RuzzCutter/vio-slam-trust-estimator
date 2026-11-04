@@ -117,8 +117,16 @@ def gt_path(seq_id: str) -> Path | None:
     candidate = ROOT / p
     if candidate.is_file():
         return candidate
-    euroc = ROOT / "ws_vins/src/open_vins/ov_data/euroc_mav" / gt
-    return euroc if euroc.is_file() else None
+    family = str(meta.get("family") or "euroc_mav")
+    fam = (load_catalog().get("families") or {}).get(family, {})
+    ov_cfg = str(meta.get("openvins_config") or fam.get("openvins_config") or family)
+    gt_name = Path(gt).name
+    ov_data = ROOT / "ws_vins/src/open_vins/ov_data"
+    for folder in (ov_cfg, family, "euroc_mav", "tum_vi"):
+        for cand in (ov_data / folder / gt_name, ov_data / folder / gt):
+            if cand.is_file():
+                return cand
+    return None
 
 
 def query(seq_id: str, key: str) -> str | None:
@@ -134,9 +142,19 @@ def query(seq_id: str, key: str) -> str | None:
     if key == "expected_path_m":
         v = meta.get("expected_path_m")
         return str(v) if v is not None else None
+    fam = (load_catalog().get("families") or {}).get(meta.get("family", "euroc_mav"), {})
     if key == "openvins_config":
-        fam = (load_catalog().get("families") or {}).get(meta.get("family", "euroc_mav"), {})
         return str(meta.get("openvins_config") or fam.get("openvins_config") or "euroc_mav")
+    if key == "openvins_config_trust":
+        return str(
+            meta.get("openvins_config_trust")
+            or fam.get("openvins_config_trust")
+            or f"{fam.get('openvins_config', 'euroc_mav')}_trust"
+        )
+    if key == "bag_dir":
+        return str(meta.get("bag_dir") or fam.get("bag_dir") or "euroc")
+    if key == "family":
+        return str(meta.get("family") or "euroc_mav")
     val = meta.get(key)
     if val is None:
         return None

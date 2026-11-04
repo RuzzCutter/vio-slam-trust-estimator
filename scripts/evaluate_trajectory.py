@@ -119,6 +119,12 @@ def main() -> None:
     parser.add_argument("--est", type=Path, required=True, help="Estimated trajectory (TUM format)")
     parser.add_argument("--gt", type=Path, required=True, help="Ground truth (TUM, OpenVINS txt, or EuRoC CSV)")
     parser.add_argument("--out-dir", type=Path, default=Path("results"))
+    parser.add_argument(
+        "--se3",
+        "--no-scale",
+        action="store_true",
+        help="Align SE(3) without scale correction (default is Sim(3) --correct_scale)",
+    )
     args = parser.parse_args()
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -132,15 +138,20 @@ def main() -> None:
 
     ape_zip = args.out_dir / "ape.zip"
     rpe_zip = args.out_dir / "rpe.zip"
+    align = ["-va", "--align"]
+    if not args.se3:
+        align.append("--correct_scale")
 
     ape = run([
         "evo_ape", "tum", str(gt_path), str(args.est),
-        "-va", "--align", "--correct_scale",
+        *align,
+        "--t_max_diff", "0.05",
         "--save_results", str(ape_zip),
     ])
     rpe = run([
         "evo_rpe", "tum", str(gt_path), str(args.est),
-        "-va", "--align", "--correct_scale", "--delta", "1", "--delta_unit", "m",
+        *align, "--delta", "1", "--delta_unit", "m",
+        "--t_max_diff", "0.05",
         "--save_results", str(rpe_zip),
     ])
 

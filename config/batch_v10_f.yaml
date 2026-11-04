@@ -1,0 +1,18 @@
+# v10 F — not run: stopped at L-stale (W=7 init fail). Do not mix with f_euroc_20260907_223705.
+# python3 scripts/run_batch.py --plan config/batch_v10_f.yaml
+
+id: v10_f
+kind: compare
+description: "F: tumvi_room1 clean+stale:2 n=7 — Failure and ATE-among-survivors"
+
+eval: true
+repeats: 7
+
+advanced:
+  retries: 1
+  trust_tau: 5.0
+
+runs:
+  - seq: tumvi_room1
+  - seq: tumvi_room1
+    degrade: stale:2

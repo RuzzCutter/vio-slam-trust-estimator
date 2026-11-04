@@ -1,0 +1,18 @@
+# v11 F after green G2. Same pair, n=7.
+# python3 scripts/run_batch.py --plan config/batch_v11_f.yaml
+
+id: v11_f
+kind: compare
+description: "F: MH_04 clean+stale:4:after=30 n=7"
+
+eval: true
+repeats: 7
+
+advanced:
+  retries: 1
+  trust_tau: 5.0
+
+runs:
+  - seq: MH_04_difficult
+  - seq: MH_04_difficult
+    degrade: stale:4:after=30

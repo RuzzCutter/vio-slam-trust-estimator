@@ -1,0 +1,21 @@
+# F2-P + F2-границы. Только после зелёных G и G2. Новый batch id.
+# python3 scripts/run_batch.py --plan config/batch_f2_euroc.yaml
+
+id: f2_euroc
+kind: compare
+description: "F2: MH_04/MH_05 × clean + D1 σ=5, n=7 пар, правило (6′)–(7′)"
+
+eval: true
+repeats: 7
+
+advanced:
+  retries: 3
+  trust_tau: 5.0
+
+runs:
+  - seq: MH_04_difficult
+  - seq: MH_04_difficult
+    degrade: gaussian:5
+  - seq: MH_05_difficult
+  - seq: MH_05_difficult
+    degrade: gaussian:5

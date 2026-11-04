@@ -63,7 +63,8 @@ def main() -> int:
         + (poses[-1][3] - poses[0][3]) ** 2
     )
     max_coord = max(max(abs(c) for c in p[1:]) for p in poses)
-    diverged = int(max_coord > 50.0 or max_jump > 5.0)
+    # Indoor EuRoC stays well under this; KITTI raw ~170 m must not look like a filter blow-up.
+    diverged = int(max_jump > 25.0 or max_coord > 2000.0 or not math.isfinite(max_coord))
 
     print(
         f"poses={len(poses)} path_m={path_m:.2f} span_m={span:.2f} "

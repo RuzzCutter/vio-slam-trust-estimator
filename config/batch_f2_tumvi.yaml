@@ -1,0 +1,18 @@
+# F2 TUM-VI после зелёного F2-P. Тот же c_ref, без подгонки.
+# python3 scripts/run_batch.py --plan config/batch_f2_tumvi.yaml
+
+id: f2_tumvi
+kind: compare
+description: "F2 transfer: TUM-VI room1 clean + D1 σ=5, n=7"
+
+eval: true
+repeats: 7
+
+advanced:
+  retries: 3
+  trust_tau: 5.0
+
+runs:
+  - seq: tumvi_room1
+  - seq: tumvi_room1
+    degrade: gaussian:5

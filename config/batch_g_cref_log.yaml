@@ -1,0 +1,16 @@
+# G bootstrap: adaptive MH_04 clean, trust_c_ref<=0 (s=1). Freeze c_ref from median c.
+# python3 scripts/run_batch.py --plan config/batch_g_cref_log.yaml
+
+id: g_cref_log
+kind: ablation
+description: "G: MH_04 adaptive clean log-only, c_ref<=0"
+
+eval: false
+repeats: 3
+
+advanced:
+  retries: 3
+  trust_tau: 5.0
+
+runs:
+  - seq: MH_04_difficult

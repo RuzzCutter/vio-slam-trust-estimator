@@ -79,10 +79,27 @@ euroc_degraded_cache_path() {
   local seq="$1"
   local dtype="$2"
   local level="$3"
-  local level_tag="${level//./p}"
-  local root
+  local after_s="${4:-0}"
+  local level_tag after_tag
+  _level_cache_tag() {
+    local lv="$1"
+    if [[ "${lv}" =~ ^[0-9]+(\.0+)?$ ]]; then
+      echo "${lv%%.*}"
+    else
+      echo "${lv//./p}"
+    fi
+  }
+  level_tag="$(_level_cache_tag "${level}")"
+  local root bag_dir tag
   root="$(aspiranture_root)"
-  echo "${root}/datasets/euroc/degraded/${seq}_${dtype}${level_tag}_ros2"
+  bag_dir="$(euroc_registry_query "${seq}" bag_dir)"
+  bag_dir="${bag_dir:-euroc}"
+  tag="${seq}_${dtype}${level_tag}"
+  if [[ "${dtype}" == "stale" && "${after_s}" != "0" && "${after_s}" != "0.0" && -n "${after_s}" ]]; then
+    after_tag="$(_level_cache_tag "${after_s}")"
+    tag="${seq}_stale${level_tag}after${after_tag}"
+  fi
+  echo "${root}/datasets/${bag_dir}/degraded/${tag}_ros2"
 }
 
 euroc_resolve_bag() {
@@ -101,9 +118,16 @@ euroc_resolve_bag() {
   fi
 
   local dtype="${degrade_spec%%:*}"
-  local dlevel="${degrade_spec#*:}"
+  local rest="${degrade_spec#*:}"
+  local dlevel="${rest%%:*}"
+  local after_s="0"
+  if [[ "${rest}" == *after=* ]]; then
+    after_s="${rest##*after=}"
+    after_s="${after_s%%:*}"
+    dlevel="${rest%%:*}"
+  fi
   local out
-  out="$(euroc_degraded_cache_path "${seq}" "${dtype}" "${dlevel}")"
+  out="$(euroc_degraded_cache_path "${seq}" "${dtype}" "${dlevel}" "${after_s}")"
 
   if [[ -d "${out}" ]] && compgen -G "${out}/*.db3" > /dev/null; then
     echo "${out}"
@@ -115,11 +139,13 @@ euroc_resolve_bag() {
     return 1
   fi
 
-  demo_section "Подготовка деградированного bag (${dtype}, level=${dlevel})..." >&2
+  demo_section "Подготовка деградированного bag (${degrade_spec})..." >&2
   source_venv
+  local extra=()
+  [[ "${after_s}" != "0" && "${after_s}" != "0.0" ]] && extra=(--after "${after_s}")
   if ! python3 "$(aspiranture_root)/scripts/degrade_ros2_bag.py" \
       --input "${base}" --output "${out}" \
-      --type "${dtype}" --level "${dlevel}" >&2; then
+      --type "${dtype}" --level "${dlevel}" "${extra[@]}" >&2; then
     demo_fail "Не удалось создать деградированный bag" >&2
     return 1
   fi
@@ -169,10 +195,29 @@ euroc_prepare_adaptive_config() {
   local trust_log="$2"
   local trust_tau="${3:-}"
   local ablate="${4:-}"
+  local seq="${5:-}"
+  local trust_name="euroc_mav_trust"
+  if [[ -n "${seq}" ]]; then
+    local q
+    q="$(euroc_registry_query "${seq}" openvins_config_trust)"
+    [[ -n "${q}" ]] && trust_name="${q}"
+  fi
   local trust_cfg_dir
-  trust_cfg_dir="$(aspiranture_root)/ws_vins/src/open_vins/config/euroc_mav_trust"
-  cp "${trust_cfg_dir}/kalibr_imu_chain.yaml" "${out_dir}/"
-  cp "${trust_cfg_dir}/kalibr_imucam_chain.yaml" "${out_dir}/"
+  trust_cfg_dir="$(aspiranture_root)/ws_vins/src/open_vins/config/${trust_name}"
+  if [[ ! -d "${trust_cfg_dir}" ]]; then
+    demo_fail "Trust config не найден: ${trust_cfg_dir}"
+    return 1
+  fi
+  local f base
+  shopt -s nullglob
+  for f in "${trust_cfg_dir}"/*; do
+    base="$(basename "${f}")"
+    if [[ "${base}" == "estimator_config.yaml" || "${base}" == *.xcf ]]; then
+      continue
+    fi
+    cp -L "${f}" "${out_dir}/"
+  done
+  shopt -u nullglob
   sed "s|trust_log_filepath:.*|trust_log_filepath: \"${trust_log}\"|" \
     "${trust_cfg_dir}/estimator_config.yaml" > "${out_dir}/estimator_config.yaml"
   if [[ -n "${trust_tau}" ]]; then
@@ -208,7 +253,7 @@ euroc_kill_stale_ros() {
   pkill -f "run_subscribe_msckf" 2>/dev/null || true
   pkill -f "trajectory_recorder" 2>/dev/null || true
   pkill -f "ros2 bag play" 2>/dev/null || true
-  pkill -f "ros2 launch.*euroc_" 2>/dev/null || true
+  pkill -f "ros2 launch" 2>/dev/null || true
   pkill -f "rviz2" 2>/dev/null || true
   sleep 3
 }

@@ -1,0 +1,18 @@
+# G live s(t) after freeze. 2 clean + 2 D1. Gates on median s, not ATE.
+# python3 scripts/run_batch.py --plan config/batch_g_cref_live.yaml
+
+id: g_cref_live
+kind: ablation
+description: "G: MH_04 adaptive clean+D1 with frozen c_ref"
+
+eval: false
+repeats: 2
+
+advanced:
+  retries: 3
+  trust_tau: 5.0
+
+runs:
+  - seq: MH_04_difficult
+  - seq: MH_04_difficult
+    degrade: gaussian:5
